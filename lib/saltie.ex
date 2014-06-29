@@ -154,8 +154,17 @@ defmodule Saltie do
   defp validate_key!(_), do: raise "Key has to be a charlist."
 
   defp uniquify_chars(charlist) do
-    set = Enum.into(charlist, HashSet.new)
-    {Enum.to_list(set), set}
+    uniquify_chars(charlist, [], HashSet.new)
+  end
+
+  defp uniquify_chars([], acc, set), do: {Enum.reverse(acc), set}
+
+  defp uniquify_chars([char|rest], acc, set) do
+    if Set.member?(set, char) do
+      uniquify_chars(rest, acc, set)
+    else
+      uniquify_chars(rest, [char|acc], Set.put(set, char))
+    end
   end
 
 
