@@ -94,17 +94,44 @@ defmodule Saltie.Helpers do
 end
 
 defmodule Saltie do
-  defstruct key: "", min_len: 0, alphabet: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+  defstruct [
+    key: [],
+    min_len: 0,
+    alphabet: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890',
+    a_len: 62,
+    seps: 'cfhistuCFHISTU',
+    s_len: 14,
+    guards: []
+  ]
 
   @min_alphabet_len 16
+  @sep_div 3.5
+  @guard_div 12
 
-  def new(opts) do
+  def new(opts \\ []) do
     s = struct(%Saltie{}, opts)
     {uniq_alphabet, set} = uniquify_chars(s.alphabet)
+
+    validate_alphabet!(set)
+    validate_key!(s.key)
+    validate_len!(s.min_len)
+
+    {seps, alphabet} = calculate_seps(s.seps, uniq_alphabet, s.key)
+
+    a_len = length(alphabet)
+    alphabet = Saltie.Helpers.consistent_shuffle(alphabet, s.key)
+    guard_count = Float.ceil(a_len / @guard_div)
+    if a_len < 3 do
+      {guards, seps} = Enum.split(seps, guard_count)
+    else
+      {guards, alphabet} = Enum.split(alphabet, guard_count)
+    end
     %Saltie{s |
-      alphabet: validate_alphabet!(set) && uniq_alphabet,
-      min_len:  validate_len!(s.min_len),
-      key:      validate_key(s.key)
+      alphabet: alphabet,
+      a_len: length(alphabet),
+      seps: seps,
+      s_len: length(seps),
+      guards: guards,
     }
   end
 
@@ -113,20 +140,59 @@ defmodule Saltie do
       Enum.count(set) < @min_alphabet_len ->
         raise "Alphabet to short. Need at least #{@min_alphabet_len} characters."
 
-      Enum.find(set, ?\s) ->
+      Enum.find(set, &(&1 == ?\s)) ->
         raise "Spaces in alphabet are not allowed."
+
+      true -> :ok
     end
   end
 
   defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
   defp validate_len!(_), do: raise "Length has to be a non-negative integer."
 
-  defp validate_key(key) when is_binary(key), do: :ok
-  defp validate_key(_), do: raise "Key has to be a binary."
+  defp validate_key!(key) when is_list(key), do: :ok
+  defp validate_key!(_), do: raise "Key has to be a charlist."
 
   defp uniquify_chars(charlist) do
     set = Enum.into(charlist, HashSet.new)
     {Enum.to_list(set), set}
+  end
+
+
+  defp calculate_seps(seps, alphabet, key) do
+    {seps, alphabet} = filter_seps(seps, [], alphabet)
+    seps = Saltie.Helpers.consistent_shuffle(seps, key)
+    a_len = length(alphabet)
+    s_len = length(seps)
+    if s_len == 0 or a_len / s_len > @sep_div do
+      new_len = max(2, Float.ceil(a_len / @sep_div))
+      if new_len > s_len do
+        diff = new_len - s_len
+        {left, right} = Enum.split(alphabet, diff)
+        seps = seps ++ left
+        alphabet = right
+      else
+        seps = Enum.take(seps, new_len)
+      end
+    end
+    {seps, alphabet}
+  end
+
+  defp filter_seps([], seps, alphabet) do
+    {Enum.reverse(seps), alphabet}
+  end
+
+  defp filter_seps([char|rest], seps, alphabet) do
+    if j = Enum.find_index(alphabet, &(&1 == char)) do
+      # alphabet should not contains seps
+      {left, [_|right]} = Enum.split(alphabet, j)
+      new_alphabet = left ++ right
+      filter_seps(rest, [char|seps], new_alphabet)
+      # this.alphabet = this.alphabet.substr(0, j) + " " + this.alphabet.substr(j + 1);
+    else
+      # seps should contain only characters present in alphabet
+      filter_seps(rest, seps, alphabet)
+    end
   end
 
 
@@ -176,7 +242,7 @@ defmodule Saltie do
 
   defp seps_step([char|_], i, num, ret, seps, seps_len) do
     index = rem(num, char+i) |> rem(seps_len)
-    ret ++ Enum.at(seps, index)
+    ret ++ [Enum.at(seps, index)]
   end
 
 
