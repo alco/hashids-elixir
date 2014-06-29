@@ -1,0 +1,2 @@
+defmodule Saltie do
+end
