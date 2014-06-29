@@ -94,7 +94,7 @@ defmodule Saltie.Helpers do
 end
 
 defmodule Saltie do
-  defstruct salt: "", min_len: 0, alphabet: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+  defstruct key: "", min_len: 0, alphabet: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
 
   @min_alphabet_len 16
 
@@ -104,7 +104,7 @@ defmodule Saltie do
     %Saltie{s |
       alphabet: validate_alphabet!(set) && uniq_alphabet,
       min_len:  validate_len!(s.min_len),
-      salt:     validate_salt!(s.salt)
+      key:      validate_key(s.key)
     }
   end
 
@@ -121,8 +121,8 @@ defmodule Saltie do
   defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
   defp validate_len!(_), do: raise "Length has to be a non-negative integer."
 
-  defp validate_salt!(salt) when is_binary(salt), do: :ok
-  defp validate_salt!(_), do: raise "Salt has to be a binary."
+  defp validate_key(key) when is_binary(key), do: :ok
+  defp validate_key(_), do: raise "Key has to be a binary."
 
   defp uniquify_chars(charlist) do
     set = Enum.into(charlist, HashSet.new)
@@ -137,7 +137,88 @@ defmodule Saltie do
 
   @spec encrypt(%Saltie{}, [integer]) :: String.t
   def encrypt(s, numbers) when is_list(numbers) do
+    {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn num, {cksm, i} ->
+      {cksm + rem(num, i), i+1}
+    end)
+
+    a_len = length(s.alphabet)
+    lottery = Enum.at(s.alphabet, rem(num_checksum, a_len))
+    {precipher, alphabet} = preencode(numbers, 0, [lottery], [lottery|s.key],
+                                      s.alphabet, a_len, s.seps, length(s.seps))
+    p_len = length(precipher)
+    g_len = length(s.guards)
+
+    {interm_cipher, incr} = extend_precipher1(precipher, p_len, s.min_len, num_checksum, s.guards, g_len)
+    {interm_cipher, incr} = extend_precipher2(interm_cipher, p_len+incr, s.min_len, num_checksum, s.guards, g_len)
+    i_len = p_len + incr
+
+    extend_cipher(interm_cipher, i_len, s.min_len, alphabet, a_len)
   end
+
+
+  defp preencode([num], _, inret, rkey, alphabet, a_len, _, _) do
+    {outret, new_alphabet, _} = preencode_step(num, inret, rkey, alphabet, a_len)
+    {outret, new_alphabet}
+  end
+
+  defp preencode([num|rest], i, inret, rkey, alphabet, a_len, seps, seps_len) do
+    {outret, new_alphabet, last} = preencode_step(num, inret, rkey, alphabet, a_len)
+    ret = seps_step(last, i, num, outret, seps, seps_len)
+    preencode(rest, i+1, ret, rkey, new_alphabet, a_len, seps, seps_len)
+  end
+
+  defp preencode_step(num, ret, rkey, alphabet, a_len) do
+    skey = Stream.concat(rkey, alphabet) |> Enum.take(a_len)
+    enc_alphabet = Saltie.Helpers.consistent_shuffle(alphabet, skey)
+    last = Saltie.Helpers.encode(num, enc_alphabet)
+    {ret ++ last, enc_alphabet, last}
+  end
+
+  defp seps_step([char|_], i, num, ret, seps, seps_len) do
+    index = rem(num, char+i) |> rem(seps_len)
+    ret ++ Enum.at(seps, index)
+  end
+
+
+  defp extend_precipher1([char|_]=precipher, p_len, min_len, num_cksm, guards, g_len)
+    when p_len < min_len
+  do
+    index = rem(num_cksm + char, g_len)
+    guard = Enum.at(guards, index)
+    {[guard|precipher], 1}
+  end
+  defp extend_precipher1(precipher, _, _, _, _, _), do: {precipher, 0}
+
+  defp extend_precipher2([_,_,char2|_]=precipher, p_len, min_len, num_cksm, guards, g_len)
+    when p_len < min_len
+  do
+    index = rem(num_cksm + char2, g_len)
+    guard = Enum.at(guards, index)
+    {precipher ++ [guard], 1}
+  end
+  defp extend_precipher2(precipher, _, _, _, _, _), do: {precipher, 0}
+
+
+  defp extend_cipher(cipher, c_len, min_len, alphabet, a_len)
+    when c_len < min_len
+  do
+    new_alphabet = Saltie.Helpers.consistent_shuffle(alphabet, alphabet)
+    half_len = trunc(a_len / 2)
+    {left, right} = Enum.split(new_alphabet, half_len)
+
+    new_cipher = Enum.flatten([right, cipher], left)
+    new_c_len = c_len + a_len
+
+    excess = new_c_len - min_len
+    if excess > 0 do
+      new_cipher |> Enum.drop(trunc(excess / 2)) |> Enum.take(min_len)
+    else
+      extend_cipher(new_cipher, new_c_len, min_len, new_alphabet, a_len)
+    end
+  end
+
+  defp extend_cipher(cipher, _, _, _, _), do: cipher
+
 ##Hashids.prototype.encode = function(numbers) {
 ##
 ##  var ret, lottery, i, len, number, buffer, last, sepsIndex, guardIndex, guard, halfLength, excess,
