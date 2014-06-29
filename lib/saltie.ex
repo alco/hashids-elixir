@@ -22,19 +22,19 @@ defmodule Saltie.Helpers do
   ##  return alphabet;
   ##
   ##};
-  def consistent_shuffle(alphabet, nil), do: alphabet
+  def consistent_shuffle(alphabet, []), do: alphabet
 
-  def consistent_shuffle(alphabet, salt) do
-    loop(length(alphabet)-1, 0, 0, alphabet, salt, length(salt))
+  def consistent_shuffle(alphabet, key) do
+    loop(length(alphabet)-1, 0, 0, alphabet, key, length(key))
   end
 
   defp loop(0, _, _, alphabet, _, _), do: alphabet
 
-  defp loop(i, v, p, alphabet, salt, salt_len) do
-    salt_char = Enum.at(salt, v)
-    j = rem(2*salt_char + v + p, i)
+  defp loop(i, v, p, alphabet, key, key_len) do
+    key_char = Enum.at(key, v)
+    j = rem(2*key_char + v + p, i)
 
-    loop(i-1, rem(v+1, salt_len), p+salt_char, swap(alphabet, j, i), salt, salt_len)
+    loop(i-1, rem(v+1, key_len), p+key_char, swap(alphabet, j, i), key, key_len)
   end
 
   defp swap(list, i, j) do
