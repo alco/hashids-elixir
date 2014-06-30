@@ -6,6 +6,7 @@ defmodule SaltieTest.Encrypt do
     |> String.split("\n")
     |> Enum.map(&String.strip/1)
     |> Enum.reject(&(&1 == ""))
+    |> Enum.reject(&match?("#"<>_, &1))
     |> Enum.map(&String.split(&1, " "))
     |> Enum.map(fn [numstr, cipherstr] ->
       {String.to_integer(numstr), String.to_char_list(cipherstr)}
@@ -19,6 +20,13 @@ defmodule SaltieTest.Encrypt do
   test "default key" do
     s = Saltie.new()
     for {num, cipher} <- tests_from_fixture("default_key") do
+      assert cipher == Saltie.encrypt(s, num)
+    end
+  end
+
+  test "default key large" do
+    s = Saltie.new()
+    for {num, cipher} <- tests_from_fixture("default_key_large") do
       assert cipher == Saltie.encrypt(s, num)
     end
   end
