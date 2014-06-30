@@ -1,3 +1,7 @@
+defmodule Saltie.Error do
+  defexception message: ""
+end
+
 defmodule Saltie.Helpers do
   ##Hashids.prototype.consistentShuffle = function(alphabet, salt) {
   ##
@@ -138,20 +142,22 @@ defmodule Saltie do
   defp validate_alphabet!(set) do
     cond do
       Enum.count(set) < @min_alphabet_len ->
-        raise "Alphabet to short. Need at least #{@min_alphabet_len} characters."
+        msg = "Alphabet to short. Need at least #{@min_alphabet_len} characters."
+        raise Saltie.Error, message: msg
 
       Enum.find(set, &(&1 == ?\s)) ->
-        raise "Spaces in alphabet are not allowed."
+        msg = "Spaces in alphabet are not allowed."
+        raise Saltie.Error, message: msg
 
       true -> :ok
     end
   end
 
   defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
-  defp validate_len!(_), do: raise "Length has to be a non-negative integer."
+  defp validate_len!(_), do: raise(Saltie.Error, message: "Length has to be a non-negative integer.")
 
   defp validate_key!(key) when is_list(key), do: :ok
-  defp validate_key!(_), do: raise "Key has to be a charlist."
+  defp validate_key!(_), do: raise(Saltie.Error, message: "Key has to be a charlist.")
 
   defp uniquify_chars(charlist) do
     uniquify_chars(charlist, [], HashSet.new)
@@ -205,15 +211,16 @@ defmodule Saltie do
   end
 
 
-  @spec encrypt(%Saltie{}, integer) :: String.t
-  def encrypt(s, number) when is_integer(number) do
+  @spec encrypt(%Saltie{}, non_neg_integer) :: String.t
+  def encrypt(s, number) when is_integer(number) and number >= 0 do
     encrypt(s, [number])
   end
 
   @spec encrypt(%Saltie{}, [integer]) :: String.t
   def encrypt(s, numbers) when is_list(numbers) do
-    {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn num, {cksm, i} ->
-      {cksm + rem(num, i), i+1}
+    {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
+      num, _ when num < 0 -> raise Saltie.Erro, message: "Negative numbers not supported"
+      num, {cksm, i} -> {cksm + rem(num, i), i+1}
     end)
 
     a_len = length(s.alphabet)
