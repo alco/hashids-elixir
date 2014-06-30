@@ -57,14 +57,14 @@ defmodule Saltie.Helpers do
   ##
   ##};
   def encode(num, alphabet) do
-    encode(num, alphabet, length(alphabet), [])
+    encode(num, alphabet, length(alphabet), [], false)
   end
 
-  defp encode(0, _, _, acc), do: acc
+  defp encode(0, _, _, acc, true), do: acc
 
-  defp encode(num, alphabet, a_len, acc) do
+  defp encode(num, alphabet, a_len, acc, _) do
     new_acc = [Enum.at(alphabet, rem(num, a_len)) | acc]
-    encode(trunc(num / a_len), alphabet, a_len, new_acc)
+    encode(trunc(num / a_len), alphabet, a_len, new_acc, true)
   end
 
   ##Hashids.prototype.unhash = function(input, alphabet) {
