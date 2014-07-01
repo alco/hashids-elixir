@@ -230,9 +230,8 @@ defmodule Saltie do
     p_len = length(precipher)
     g_len = length(s.guards)
 
-    {interm_cipher, incr} = extend_precipher1(precipher, p_len, s.min_len, num_checksum, s.guards, g_len)
-    {interm_cipher, incr} = extend_precipher2(interm_cipher, p_len+incr, s.min_len, num_checksum, s.guards, g_len)
-    i_len = p_len + incr
+    {interm_cipher, i_len} = extend_precipher1(precipher, p_len, s.min_len, num_checksum, s.guards, g_len)
+    {interm_cipher, i_len} = extend_precipher2(interm_cipher, i_len, s.min_len, num_checksum, s.guards, g_len)
 
     extend_cipher(interm_cipher, i_len, s.min_len, alphabet, a_len)
   end
@@ -267,18 +266,18 @@ defmodule Saltie do
   do
     index = rem(num_cksm + char, g_len)
     guard = Enum.at(guards, index)
-    {[guard|precipher], 1}
+    {[guard|precipher], p_len+1}
   end
-  defp extend_precipher1(precipher, _, _, _, _, _), do: {precipher, 0}
+  defp extend_precipher1(precipher, p_len, _, _, _, _), do: {precipher, p_len}
 
   defp extend_precipher2([_,_,char2|_]=precipher, p_len, min_len, num_cksm, guards, g_len)
     when p_len < min_len
   do
     index = rem(num_cksm + char2, g_len)
     guard = Enum.at(guards, index)
-    {precipher ++ [guard], 1}
+    {precipher ++ [guard], p_len+1}
   end
-  defp extend_precipher2(precipher, _, _, _, _, _), do: {precipher, 0}
+  defp extend_precipher2(precipher, p_len, _, _, _, _), do: {precipher, p_len}
 
 
   defp extend_cipher(cipher, c_len, min_len, alphabet, a_len)
@@ -288,7 +287,7 @@ defmodule Saltie do
     half_len = trunc(a_len / 2)
     {left, right} = Enum.split(new_alphabet, half_len)
 
-    new_cipher = Enum.flatten([right, cipher], left)
+    new_cipher = List.flatten([right, cipher], left)
     new_c_len = c_len + a_len
 
     excess = new_c_len - min_len
