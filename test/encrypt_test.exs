@@ -30,4 +30,42 @@ defmodule SaltieTest.Encrypt do
       assert cipher == Saltie.encrypt(s, num)
     end
   end
+
+  test "short alphabet" do
+    s = Saltie.new(alphabet: 'abc1029384756XYZ')
+    for {num, cipher} <- tests_from_fixture("short_alphabet") do
+      assert cipher == Saltie.encrypt(s, num)
+    end
+  end
+
+  test "short alphabet large" do
+    s = Saltie.new(alphabet: 'abc1029384756XYZ')
+    for {num, cipher} <- tests_from_fixture("short_alphabet_large") do
+      assert cipher == Saltie.encrypt(s, num)
+    end
+  end
+
+  test "min length 3" do
+    s = Saltie.new(min_len: 3)
+    for {num, cipher} <- tests_from_fixture("min_length_3") do
+      assert cipher == Saltie.encrypt(s, num)
+      assert length(cipher) >= 3
+    end
+  end
+
+  test "min length 20" do
+    s = Saltie.new(min_len: 20)
+    for {num, cipher} <- tests_from_fixture("min_length_20") do
+      assert cipher == Saltie.encrypt(s, num)
+      assert length(cipher) == 20
+    end
+  end
+
+  test "min length 20 large " do
+    s = Saltie.new(min_len: 20, alphabet: 'abcdefghijklmnop0')
+    for {num, cipher} <- tests_from_fixture("min_length_20_large") do
+      assert cipher == Saltie.encrypt(s, num)
+      assert length(cipher) > 20
+    end
+  end
 end
