@@ -211,12 +211,12 @@ defmodule Saltie do
   end
 
 
-  @spec encrypt(%Saltie{}, non_neg_integer) :: String.t
+  @spec encrypt(%Saltie{}, non_neg_integer) :: char_list
   def encrypt(s, number) when is_integer(number) and number >= 0 do
     encrypt(s, [number])
   end
 
-  @spec encrypt(%Saltie{}, [integer]) :: String.t
+  @spec encrypt(%Saltie{}, [non_neg_integer]) :: char_list
   def encrypt(s, numbers) when is_list(numbers) do
     {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
       num, _ when num < 0 -> raise Saltie.Erro, message: "Negative numbers not supported"
@@ -365,8 +365,34 @@ defmodule Saltie do
 ##
 ##};
 
-  @spec decrypt(%Saltie{}, String.t) :: [integer]
-  def decrypt(s, string) do
+  @spec decrypt(%Saltie{}, char_list) :: [non_neg_integer]
+  def decrypt(s, cipher) do
+    guards_str = List.to_string(s.guards)
+    cipher_split_at_guards = Regex.split(~r/[#{Regex.escape(guards_str)}]/, List.to_string(cipher))
+    cipher_part = case cipher_split_at_guards do
+      [_, x]    -> x
+      [_, x, _] -> x
+      [x|_]     -> x
+    end
+
+    if cipher_part && cipher_part != "" do
+      seps_str = List.to_string(s.guards)
+      {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
+      rkey = [lottery|s.key]
+      Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
+      |> decode_parts(rkey, s.alphabet, s.a_len, [])
+    else
+      []
+    end
+  end
+
+  defp decode_parts([], _, _, _, acc), do: Enum.reverse(acc)
+
+  defp decode_parts([part|rest], rkey, alphabet, a_len, acc) do
+    buffer = rkey ++ alphabet
+    dec_alphabet = Saltie.Helpers.consistent_shuffle(alphabet, Enum.take(buffer, a_len))
+    number = Saltie.Helpers.decode(String.to_char_list(part), dec_alphabet)
+    decode_parts(rest, rkey, dec_alphabet, a_len, [number|acc])
   end
 ##
 ##Hashids.prototype.decode = function(hash, alphabet) {
