@@ -92,7 +92,7 @@ defmodule Saltie.Helpers do
   defp decode(num, [char|rest], s_len, alphabet, a_len) do
     pos = Enum.find_index(alphabet, &(&1 == char))
     rem_len = s_len-1
-    new_num = num+pos*trunc(:math.pow(a_len, rem_len))
+    new_num = num+pos*:math.pow(a_len, rem_len)
     decode(new_num, rest, rem_len, alphabet, a_len)
   end
 end
@@ -376,9 +376,9 @@ defmodule Saltie do
     end
 
     if cipher_part && cipher_part != "" do
-      seps_str = List.to_string(s.guards)
       {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
       rkey = [lottery|s.key]
+      seps_str = List.to_string(s.seps)
       Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
       |> decode_parts(rkey, s.alphabet, s.a_len, [])
     else
