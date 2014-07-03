@@ -272,7 +272,7 @@ defmodule Saltie do
       [x|_]     -> x
     end
 
-    if cipher_part && cipher_part != "" do
+    if cipher_part != "" do
       {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
       rkey = [lottery|key]
       seps_str = List.to_string(seps)

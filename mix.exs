@@ -4,7 +4,7 @@ defmodule Saltie.Mixfile do
   def project do
     [
       app: :saltie,
-      version: "0.3.0",
+      version: "0.4.0-dev",
       elixir: "~> 0.13.3 or ~> 0.14.0",
       description: description,
       package: package,
