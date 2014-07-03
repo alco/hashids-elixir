@@ -3,12 +3,25 @@ defmodule Saltie.Error do
 end
 
 defmodule Saltie do
+  @moduledoc """
+  Saltie is a pseudo-encryption library.
+  """
+
   defstruct [
-    key: [], min_len: 0,
+    key: [],
+    min_len: 0,
     alphabet: [], a_len: 0,
     seps: [], s_len: 0,
     guards: [], g_len: 0,
   ]
+
+  #  @type t :: %Saltie{
+  #    key: char_list,
+  #    min_len: non_neg_integer,
+  #    alphabet: char_list, a_len: non_neg_integer,
+  #    seps: char_list, s_len: non_neg_integer,
+  #    guards: char_list, g_len: non_neg_integer,
+  #  }
 
 
   @min_alphabet_len 16
@@ -27,8 +40,8 @@ defmodule Saltie do
 
   Raises `Saltie.Error` if it encounters an invalid option.
   """
-  @spec new() :: %Saltie{}
-  @spec new(Keywort.t) :: %Saltie{}
+  @spec new() :: t
+  @spec new(Keywort.t) :: t
 
   def new(options \\ []) do
     alphabet = Keyword.get(options, :alphabet, @default_alphabet)
@@ -142,12 +155,12 @@ defmodule Saltie do
   Only non-negative integers are supported.
   """
 
-  @spec encrypt(%Saltie{}, non_neg_integer) :: char_list
+  @spec encrypt(t, non_neg_integer) :: char_list
   def encrypt(s, number) when is_integer(number) and number >= 0 do
     encrypt(s, [number])
   end
 
-  @spec encrypt(%Saltie{}, [non_neg_integer]) :: char_list
+  @spec encrypt(t, [non_neg_integer]) :: char_list
   def encrypt(s, numbers) when is_list(numbers) do
     {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
       num, _ when num < 0 or not is_integer(num) ->
@@ -242,7 +255,7 @@ defmodule Saltie do
   @doc """
   Decrypts the given char list back into a list of numbers.
   """
-  @spec decrypt(%Saltie{}, char_list) :: [non_neg_integer]
+  @spec decrypt(t, char_list) :: [non_neg_integer]
 
   def decrypt(s, cipher) do
     %Saltie{
