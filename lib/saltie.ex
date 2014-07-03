@@ -56,8 +56,8 @@ defmodule Saltie do
     }
   end
 
-  defp uniquify_chars(charlist) do
-    uniquify_chars(charlist, [], HashSet.new)
+  defp uniquify_chars(char_list) do
+    uniquify_chars(char_list, [], HashSet.new)
   end
 
   defp uniquify_chars([], acc, set), do: {Enum.reverse(acc), set}
@@ -86,7 +86,7 @@ defmodule Saltie do
 
   defp validate_key!(key) when is_list(key), do: :ok
   defp validate_key!(_) do
-    raise Saltie.Error, message: "Key has to be a (possibly empty) charlist."
+    raise Saltie.Error, message: "Key has to be a (possibly empty) char list."
   end
 
   defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
@@ -130,6 +130,14 @@ defmodule Saltie do
   end
 
 
+  @doc """
+  Encrypts the given number or a list of numbers.
+
+  Returns a char list.
+
+  Only non-negative integers are supported.
+  """
+
   @spec encrypt(%Saltie{}, non_neg_integer) :: char_list
   def encrypt(s, number) when is_integer(number) and number >= 0 do
     encrypt(s, [number])
@@ -138,8 +146,10 @@ defmodule Saltie do
   @spec encrypt(%Saltie{}, [non_neg_integer]) :: char_list
   def encrypt(s, numbers) when is_list(numbers) do
     {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
-      num, _ when num < 0 -> raise Saltie.Error, message: "Negative numbers not supported"
-      num, {cksm, i} -> {cksm + rem(num, i), i+1}
+      num, _ when num < 0 or not is_integer(num) ->
+        raise Saltie.Error, message: "Expected a non-negative integer"
+      num, {cksm, i} ->
+        {cksm + rem(num, i), i+1}
     end)
 
     a_len = length(s.alphabet)
@@ -219,6 +229,10 @@ defmodule Saltie do
 
   defp extend_cipher(cipher, _, _, _, _), do: cipher
 
+
+  @doc """
+  Decrypts the given char list back into a list of numbers.
+  """
 
   @spec decrypt(%Saltie{}, char_list) :: [non_neg_integer]
   def decrypt(s, cipher) do

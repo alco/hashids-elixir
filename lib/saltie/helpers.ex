@@ -46,7 +46,7 @@ defmodule Saltie.Helpers do
     decode(0, str, length(str), alphabet, a_len)
   end
 
-  defp decode(num, [], 0, _, _), do: num
+  defp decode(num, [], 0, _, _), do: trunc(num)
 
   defp decode(num, [char|rest], s_len, alphabet, a_len) do
     #IO.puts "Decode step: num = #{inspect num}"
