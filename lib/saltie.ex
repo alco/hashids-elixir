@@ -4,7 +4,10 @@ end
 
 defmodule Saltie do
   defstruct [
-    key: [], min_len: 0, alphabet: [], a_len: 0, seps: [], s_len: 0, guards: []
+    key: [], min_len: 0,
+    alphabet: [], a_len: 0,
+    seps: [], s_len: 0,
+    guards: [], g_len: 0,
   ]
 
 
@@ -47,12 +50,13 @@ defmodule Saltie do
       {guards, seps} = Enum.split(seps, guard_count)
     else
       {guards, alphabet} = Enum.split(alphabet, guard_count)
+      a_len = a_len - guard_count
     end
     %Saltie{
       key: key, min_len: min_len,
-      alphabet: alphabet, a_len: length(alphabet),
+      alphabet: alphabet, a_len: a_len,
       seps: seps, s_len: length(seps),
-      guards: guards,
+      guards: guards, g_len: length(guards),
     }
   end
 
@@ -152,17 +156,22 @@ defmodule Saltie do
         {cksm + rem(num, i), i+1}
     end)
 
-    a_len = length(s.alphabet)
-    lottery = Enum.at(s.alphabet, rem(num_checksum, a_len))
-    {precipher, alphabet} = preencode(numbers, 0, [lottery], [lottery|s.key],
-                                      s.alphabet, a_len, s.seps, length(s.seps))
+    %Saltie{
+      key: key, min_len: min_len,
+      alphabet: alphabet, a_len: a_len,
+      seps: seps, s_len: s_len,
+      guards: guards, g_len: g_len,
+    } = s
+
+    lottery = Enum.at(alphabet, rem(num_checksum, a_len))
+    {precipher, alphabet} = preencode(numbers, 0, [lottery], [lottery|key],
+                                      alphabet, a_len, seps, s_len)
     p_len = length(precipher)
-    g_len = length(s.guards)
 
-    {interm_cipher, i_len} = extend_precipher1(precipher, p_len, s.min_len, num_checksum, s.guards, g_len)
-    {interm_cipher, i_len} = extend_precipher2(interm_cipher, i_len, s.min_len, num_checksum, s.guards, g_len)
+    {interm_cipher, i_len} = extend_precipher1(precipher, p_len, min_len, num_checksum, guards, g_len)
+    {interm_cipher, i_len} = extend_precipher2(interm_cipher, i_len, min_len, num_checksum, guards, g_len)
 
-    extend_cipher(interm_cipher, i_len, s.min_len, alphabet, a_len)
+    extend_cipher(interm_cipher, i_len, min_len, alphabet, a_len)
   end
 
 
@@ -236,7 +245,13 @@ defmodule Saltie do
   @spec decrypt(%Saltie{}, char_list) :: [non_neg_integer]
 
   def decrypt(s, cipher) do
-    guards_str = List.to_string(s.guards)
+    %Saltie{
+      key: key,
+      alphabet: alphabet, a_len: a_len,
+      seps: seps, guards: guards,
+    } = s
+
+    guards_str = List.to_string(guards)
     cipher_split_at_guards = Regex.split(~r/[#{Regex.escape(guards_str)}]/, List.to_string(cipher))
     cipher_part = case cipher_split_at_guards do
       [_, x]    -> x
@@ -246,10 +261,10 @@ defmodule Saltie do
 
     if cipher_part && cipher_part != "" do
       {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
-      rkey = [lottery|s.key]
-      seps_str = List.to_string(s.seps)
+      rkey = [lottery|key]
+      seps_str = List.to_string(seps)
       Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
-      |> decode_parts(rkey, s.alphabet, s.a_len, [])
+      |> decode_parts(rkey, alphabet, a_len, [])
     else
       []
     end
