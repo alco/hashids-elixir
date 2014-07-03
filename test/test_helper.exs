@@ -11,9 +11,25 @@ defmodule SaltieTest.Helpers do
     |> Enum.map(&String.strip/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.reject(&match?("#"<>_, &1))
-    |> Enum.map(&String.split(&1, " "))
-    |> Enum.map(fn [numstr, cipherstr] ->
-      {String.to_integer(numstr), String.to_char_list(cipherstr)}
-    end)
+    |> Enum.map(&split_fields/1)
+  end
+
+  defp split_fields(str) do
+    # [1 2 3 4] <cipher>
+    case Regex.run(~r/^\[([\d ]+)\]\s+(.+)$/, str) do
+      [_, numstr, cipher] ->
+        numbers =
+          numstr
+          |> String.split(" ")
+          |> Enum.map(&String.strip/1)
+          |> Enum.reject(&(&1 == ""))
+          |> Enum.map(&String.to_integer/1)
+        {numbers, String.to_char_list(cipher)}
+
+      _ ->
+        # <number> <cipher>
+        [numstr, cipher] = String.split(str, " ")
+        {String.to_integer(numstr), String.to_char_list(cipher)}
+    end
   end
 end
