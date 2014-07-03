@@ -49,12 +49,8 @@ defmodule Saltie.Helpers do
   defp decode(num, [], 0, _, _), do: trunc(num)
 
   defp decode(num, [char|rest], s_len, alphabet, a_len) do
-    #IO.puts "Decode step: num = #{inspect num}"
     pos = Enum.find_index(alphabet, &(&1 == char))
     rem_len = s_len-1
-    #IO.puts "a length = #{inspect a_len}"
-    #IO.puts "rem length = #{inspect rem_len}"
-    #IO.puts "pos = #{inspect rem_len}"
     new_num = num+pos*:math.pow(a_len, rem_len)
     decode(new_num, rest, rem_len, alphabet, a_len)
   end

@@ -19,14 +19,14 @@ defmodule Saltie do
   alias Saltie.Helpers
 
 
-  @spec new() :: %Saltie{}
-  @spec new(Keywort.t) :: %Saltie{}
-
   @doc """
   Returns a struct that should be passed to `encrypt/2` and `decrypt/2`.
 
   Raises `Saltie.Error` if it encounters an invalid option.
   """
+  @spec new() :: %Saltie{}
+  @spec new(Keywort.t) :: %Saltie{}
+
   def new(options \\ []) do
     alphabet = Keyword.get(options, :alphabet, @default_alphabet)
     key = Keyword.get(options, :key, [])
@@ -233,8 +233,8 @@ defmodule Saltie do
   @doc """
   Decrypts the given char list back into a list of numbers.
   """
-
   @spec decrypt(%Saltie{}, char_list) :: [non_neg_integer]
+
   def decrypt(s, cipher) do
     guards_str = List.to_string(s.guards)
     cipher_split_at_guards = Regex.split(~r/[#{Regex.escape(guards_str)}]/, List.to_string(cipher))
@@ -264,93 +264,3 @@ defmodule Saltie do
     decode_parts(rest, rkey, dec_alphabet, a_len, [number|acc])
   end
 end
-
-##function Hashids(salt, minHashLength, alphabet) {
-##
-##  var uniqueAlphabet, i, j, len, sepsLength, diff, guardCount;
-##
-##  this.version = "0.3.3";
-##
-##  /* internal settings */
-##
-##  this.minAlphabetLength = 16;
-##  this.sepDiv = 3.5;
-##  this.guardDiv = 12;
-##
-##  /* error messages */
-##
-##  this.alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-##  this.seps = "cfhistuCFHISTU";
-##  this.minHashLength = parseInt(minHashLength, 10) > 0 ? minHashLength : 0;
-##  this.salt = (typeof salt === "string") ? salt : "";
-##
-##  if (typeof alphabet === "string") {
-##    this.alphabet = alphabet;
-##  }
-##
-##  for (uniqueAlphabet = "", i = 0, len = this.alphabet.length; i !== len; i++) {
-##    if (uniqueAlphabet.indexOf(this.alphabet[i]) === -1) {
-##      uniqueAlphabet += this.alphabet[i];
-##    }
-##  }
-##
-##  this.alphabet = uniqueAlphabet;
-##
-##  if (this.alphabet.length < this.minAlphabetLength) {
-##    throw this.errorAlphabetLength.replace("X", this.minAlphabetLength);
-##  }
-##
-##  if (this.alphabet.search(" ") !== -1) {
-##    throw this.errorAlphabetSpace;
-##  }
-##
-##  /* seps should contain only characters present in alphabet; alphabet should not contains seps */
-##
-##  for (i = 0, len = this.seps.length; i !== len; i++) {
-##
-##    j = this.alphabet.indexOf(this.seps[i]);
-##    if (j === -1) {
-##      this.seps = this.seps.substr(0, i) + " " + this.seps.substr(i + 1);
-##    } else {
-##      this.alphabet = this.alphabet.substr(0, j) + " " + this.alphabet.substr(j + 1);
-##    }
-##
-##  }
-##
-##  this.alphabet = this.alphabet.replace(/ /g, "");
-##
-##  this.seps = this.seps.replace(/ /g, "");
-##  this.seps = this.consistentShuffle(this.seps, this.salt);
-##
-##  if (!this.seps.length || (this.alphabet.length / this.seps.length) > this.sepDiv) {
-##
-##    sepsLength = Math.ceil(this.alphabet.length / this.sepDiv);
-##
-##    if (sepsLength === 1) {
-##      sepsLength++;
-##    }
-##
-##    if (sepsLength > this.seps.length) {
-##
-##      diff = sepsLength - this.seps.length;
-##      this.seps += this.alphabet.substr(0, diff);
-##      this.alphabet = this.alphabet.substr(diff);
-##
-##    } else {
-##      this.seps = this.seps.substr(0, sepsLength);
-##    }
-##
-##  }
-##
-##  this.alphabet = this.consistentShuffle(this.alphabet, this.salt);
-##  guardCount = Math.ceil(this.alphabet.length / this.guardDiv);
-##
-##  if (this.alphabet.length < 3) {
-##    this.guards = this.seps.substr(0, guardCount);
-##    this.seps = this.seps.substr(guardCount);
-##  } else {
-##    this.guards = this.alphabet.substr(0, guardCount);
-##    this.alphabet = this.alphabet.substr(guardCount);
-##  }
-##
-##}
