@@ -37,7 +37,7 @@ defmodule Saltie.Helpers do
 
   defp encode(num, alphabet, a_len, acc, _) do
     new_acc = [Enum.at(alphabet, rem(num, a_len)) | acc]
-    encode(trunc(num / a_len), alphabet, a_len, new_acc, true)
+    encode(div(num, a_len), alphabet, a_len, new_acc, true)
   end
 
 
@@ -46,12 +46,26 @@ defmodule Saltie.Helpers do
     decode(0, str, length(str), alphabet, a_len)
   end
 
-  defp decode(num, [], 0, _, _), do: trunc(num)
+  defp decode(num, [], 0, _, _), do: num
 
   defp decode(num, [char|rest], s_len, alphabet, a_len) do
     pos = Enum.find_index(alphabet, &(&1 == char))
     rem_len = s_len-1
-    new_num = num+pos*:math.pow(a_len, rem_len)
+    new_num = num+pos*ipow(a_len, rem_len)
     decode(new_num, rest, rem_len, alphabet, a_len)
+  end
+
+  use Bitwise
+
+  defp ipow(_, 0), do: 1
+  defp ipow(a, 1), do: a
+
+  defp ipow(a, n) when band(n, 1) === 0 do
+    tmp = ipow(a, n >>> 1)
+    tmp * tmp
+  end
+
+  defp ipow(a, n) do
+    a * ipow(a, n-1)
   end
 end

@@ -4,7 +4,12 @@ Saltie
 Saltie is a pseudo-encryption library primarily used for obfuscating numerical
 identifiers to opaque strings.
 
-This is a port of [Hashids][1], the versioning is kept in sync with it.
+This is a port of [Hashids][1]. Saltie v0.3.0 implements the same algorithm as
+version 0.3.0 of Hashids.
+
+In Saltie v0.4.0-dev, support for big integers was added. It makes the values
+produced for some large numbers that can still fit into a float64 differ from
+the output produced by the reference implementation in JavaScript.
 
   [1]: http://www.hashids.org/
 

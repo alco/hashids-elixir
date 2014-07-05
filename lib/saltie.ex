@@ -235,7 +235,7 @@ defmodule Saltie do
     when c_len < min_len
   do
     new_alphabet = Helpers.consistent_shuffle(alphabet, alphabet)
-    half_len = trunc(a_len / 2)
+    half_len = div(a_len, 2)
     {left, right} = Enum.split(new_alphabet, half_len)
 
     new_cipher = List.flatten([right, cipher], left)
@@ -243,7 +243,7 @@ defmodule Saltie do
 
     excess = new_c_len - min_len
     if excess > 0 do
-      new_cipher |> Enum.drop(trunc(excess / 2)) |> Enum.take(min_len)
+      new_cipher |> Enum.drop(div(excess, 2)) |> Enum.take(min_len)
     else
       extend_cipher(new_cipher, new_c_len, min_len, new_alphabet, a_len)
     end
