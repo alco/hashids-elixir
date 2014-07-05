@@ -1,6 +1,11 @@
 ExUnit.start()
 
 defmodule SaltieTest.Helpers do
+  def tests_from_fixture_large(path) do
+    File.read!(Path.join([__DIR__, "fixtures", "v0.4.0", path]))
+    |> tests_from_string()
+  end
+
   def tests_from_fixture(path) do
     File.read!(Path.join([__DIR__, "fixtures", "v0.3.0", path]))
     |> tests_from_string()

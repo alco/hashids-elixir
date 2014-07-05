@@ -21,7 +21,7 @@ defmodule SaltieTest.Encrypt do
 
   test "default key large" do
     s = Saltie.new()
-    for {num, cipher} <- tests_from_fixture("default_key_large") do
+    for {num, cipher} <- tests_from_fixture_large("default_key_large") do
       assert cipher == Saltie.encrypt(s, num)
       assert [num] === Saltie.decrypt(s, cipher)
     end
@@ -37,7 +37,7 @@ defmodule SaltieTest.Encrypt do
 
   test "short alphabet large" do
     s = Saltie.new(alphabet: 'abc1029384756XYZ')
-    for {num, cipher} <- tests_from_fixture("short_alphabet_large") do
+    for {num, cipher} <- tests_from_fixture_large("short_alphabet_large") do
       assert cipher == Saltie.encrypt(s, num)
       assert [num] === Saltie.decrypt(s, cipher)
     end
@@ -55,7 +55,7 @@ defmodule SaltieTest.Encrypt do
 
   test "long alphabet large" do
     s = Saltie.new(alphabet: @long_one)
-    for {num, cipher} <- tests_from_fixture("long_alphabet_large") do
+    for {num, cipher} <- tests_from_fixture_large("long_alphabet_large") do
       assert cipher == Saltie.encrypt(s, num)
       assert [num] === Saltie.decrypt(s, cipher)
     end
@@ -82,7 +82,7 @@ defmodule SaltieTest.Encrypt do
 
   test "min length 20 large" do
     s = Saltie.new(min_len: 20, alphabet: 'abcdefghijklmnop0')
-    for {num, cipher} <- tests_from_fixture("min_length_20_large") do
+    for {num, cipher} <- tests_from_fixture_large("min_length_20_large") do
       assert cipher == Saltie.encrypt(s, num)
       assert length(cipher) > 20
       assert [num] == Saltie.decrypt(s, cipher)
@@ -107,7 +107,7 @@ defmodule SaltieTest.Encrypt do
 
   test "custom key large" do
     s = Saltie.new(key: '-->secret key, no salt<--')
-    for {num, cipher} <- tests_from_fixture("custom_key_large") do
+    for {num, cipher} <- tests_from_fixture_large("custom_key_large") do
       assert cipher == Saltie.encrypt(s, num)
       assert [num] == Saltie.decrypt(s, cipher)
     end
