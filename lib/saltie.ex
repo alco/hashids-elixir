@@ -15,13 +15,13 @@ defmodule Saltie do
     guards: [], g_len: 0,
   ]
 
-  #  @type t :: %Saltie{
-  #    key: char_list,
-  #    min_len: non_neg_integer,
-  #    alphabet: char_list, a_len: non_neg_integer,
-  #    seps: char_list, s_len: non_neg_integer,
-  #    guards: char_list, g_len: non_neg_integer,
-  #  }
+  @type t :: %Saltie{
+    key: char_list,
+    min_len: non_neg_integer,
+    alphabet: char_list, a_len: non_neg_integer,
+    seps: char_list, s_len: non_neg_integer,
+    guards: char_list, g_len: non_neg_integer,
+  }
 
 
   @min_alphabet_len 16
@@ -58,7 +58,7 @@ defmodule Saltie do
     {seps, alphabet, a_len} = calculate_seps(@seps, uniq_alphabet, a_len, key)
 
     alphabet = Helpers.consistent_shuffle(alphabet, key)
-    guard_count = Float.ceil(a_len / @guard_div)
+    guard_count = trunc(Float.ceil(a_len / @guard_div))
     if a_len < 3 do
       {guards, seps} = Enum.split(seps, guard_count)
     else
@@ -116,7 +116,7 @@ defmodule Saltie do
     seps = Helpers.consistent_shuffle(seps, key)
     s_len = length(seps)
     if s_len == 0 or a_len / s_len > @sep_div do
-      new_len = max(2, Float.ceil(a_len / @sep_div))
+      new_len = max(2, trunc(Float.ceil(a_len / @sep_div)))
       if new_len > s_len do
         diff = new_len - s_len
         {left, right} = Enum.split(alphabet, diff)
