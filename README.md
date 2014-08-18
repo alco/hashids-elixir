@@ -1,6 +1,9 @@
 Saltie
 ======
 
+[![Hex version](https://img.shields.io/hexpm/v/saltie.svg "Hex version")](https://hex.pm/packages/saltie)
+![Hex downloads](https://img.shields.io/hexpm/dt/saltie.svg "Hex downloads")
+
 Saltie is a pseudo-encryption library primarily used for obfuscating numerical
 identifiers to opaque strings.
 
@@ -20,7 +23,7 @@ Add Saltie as a dependency to your Mix project:
 
 ```elixir
 defp deps do
-  [{:saltie, "== 0.3.0"}]
+  [{:saltie, "== 0.3"}]
 end
 ```
 
