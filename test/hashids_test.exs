@@ -3,7 +3,7 @@ defmodule HashidsTest.Encode do
 
   import HashidsTest.Helpers
 
-  test "default key" do
+  test "default salt" do
     s = Hashids.new()
     for {num, cipher} <- tests_from_fixture("default_key") do
       assert cipher == Hashids.encode(s, num)
@@ -11,7 +11,7 @@ defmodule HashidsTest.Encode do
     end
   end
 
-  test "default key multinum" do
+  test "default salt multinum" do
     s = Hashids.new()
     for {numlist, cipher} <- tests_from_fixture("default_key_list") do
       assert cipher == Hashids.encode(s, numlist)
@@ -19,7 +19,7 @@ defmodule HashidsTest.Encode do
     end
   end
 
-  test "default key large" do
+  test "default salt large" do
     s = Hashids.new()
     for {num, cipher} <- tests_from_fixture_large("default_key_large") do
       assert cipher == Hashids.encode(s, num)
@@ -89,24 +89,24 @@ defmodule HashidsTest.Encode do
     end
   end
 
-  test "custom key 1" do
-    s = Hashids.new(key: 'hello world')
+  test "custom salt 1" do
+    s = Hashids.new(salt: 'hello world')
     for {num, cipher} <- tests_from_fixture("custom_key_1") do
       assert cipher == Hashids.encode(s, num)
       assert [num] === Hashids.decode(s, cipher)
     end
   end
 
-  test "custom key 2" do
-    s = Hashids.new(key: '123_-+EBNFarigatou')
+  test "custom salt 2" do
+    s = Hashids.new(salt: '123_-+EBNFarigatou')
     for {num, cipher} <- tests_from_fixture("custom_key_2") do
       assert cipher == Hashids.encode(s, num)
       assert [num] === Hashids.decode(s, cipher)
     end
   end
 
-  test "custom key large" do
-    s = Hashids.new(key: '-->secret key, no salt<--')
+  test "custom salt large" do
+    s = Hashids.new(salt: '-->secret key, no salt<--')
     for {num, cipher} <- tests_from_fixture_large("custom_key_large") do
       assert cipher == Hashids.encode(s, num)
       assert [num] == Hashids.decode(s, cipher)
@@ -114,7 +114,7 @@ defmodule HashidsTest.Encode do
   end
 
   test "mix and match" do
-    s = Hashids.new(key: '123,./~_+', min_len: 5, alphabet: 'Aünîcø∂émädñèsSß')
+    s = Hashids.new(salt: '123,./~_+', min_len: 5, alphabet: 'Aünîcø∂émädñèsSß')
     for {nums, cipher} <- tests_from_fixture("mix_and_match") do
       assert cipher == Hashids.encode(s, nums)
       assert List.wrap(nums) === Hashids.decode(s, cipher)

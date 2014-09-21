@@ -6,7 +6,7 @@ Hashids
 
 Hashids lets you obfuscate numerical identifiers via reversible mapping.
 
-This is a port of [Hashids][1] originally written in JavaScript.
+This is a port of [Hashids][1] from JavaScript.
 
   [1]: http://www.hashids.org/
 
@@ -28,8 +28,8 @@ parameters can be customized.
 
 ```elixir
 s = Hashids.new([
-  key: '123',  # using a custom key helps producing unique cipher text
-  min_len: 2,  # minimum length of the cipher text (1 by default)
+  salt: '123',  # using a custom salt helps producing unique cipher text
+  min_len: 2,   # minimum length of the cipher text (1 by default)
 ])
 
 cipher1 = Hashids.encode(s, 129)

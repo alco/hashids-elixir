@@ -8,7 +8,7 @@ defmodule Hashids do
   """
 
   defstruct [
-    key: [],
+    salt: [],
     min_len: 0,
     alphabet: [], a_len: 0,
     seps: [], s_len: 0,
@@ -16,7 +16,7 @@ defmodule Hashids do
   ]
 
   @type t :: %Hashids{
-    key: char_list,
+    salt: char_list,
     min_len: non_neg_integer,
     alphabet: char_list, a_len: non_neg_integer,
     seps: char_list, s_len: non_neg_integer,
@@ -45,19 +45,19 @@ defmodule Hashids do
 
   def new(options \\ []) do
     alphabet = Keyword.get(options, :alphabet, @default_alphabet)
-    key = Keyword.get(options, :key, [])
+    salt = Keyword.get(options, :salt, [])
     min_len = Keyword.get(options, :min_len, 0)
 
     {uniq_alphabet, set} = uniquify_chars(alphabet)
 
     validate_alphabet!(set)
-    validate_key!(key)
+    validate_salt!(salt)
     validate_len!(min_len)
 
     a_len = Enum.count(set)
-    {seps, alphabet, a_len} = calculate_seps(@seps, uniq_alphabet, a_len, key)
+    {seps, alphabet, a_len} = calculate_seps(@seps, uniq_alphabet, a_len, salt)
 
-    alphabet = Helpers.consistent_shuffle(alphabet, key)
+    alphabet = Helpers.consistent_shuffle(alphabet, salt)
     guard_count = trunc(Float.ceil(a_len / @guard_div))
     if a_len < 3 do
       {guards, seps} = Enum.split(seps, guard_count)
@@ -66,7 +66,7 @@ defmodule Hashids do
       a_len = a_len - guard_count
     end
     %Hashids{
-      key: key, min_len: min_len,
+      salt: salt, min_len: min_len,
       alphabet: alphabet, a_len: a_len,
       seps: seps, s_len: length(seps),
       guards: guards, g_len: length(guards),
@@ -101,9 +101,9 @@ defmodule Hashids do
     end
   end
 
-  defp validate_key!(key) when is_list(key), do: :ok
-  defp validate_key!(_) do
-    raise Hashids.Error, message: "Key has to be a (possibly empty) char list."
+  defp validate_salt!(salt) when is_list(salt), do: :ok
+  defp validate_salt!(_) do
+    raise Hashids.Error, message: "Salt has to be a (possibly empty) char list."
   end
 
   defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
@@ -111,9 +111,9 @@ defmodule Hashids do
     raise Hashids.Error, message: "Minimum length has to be a non-negative integer."
   end
 
-  defp calculate_seps(seps, alphabet, a_len, key) do
+  defp calculate_seps(seps, alphabet, a_len, salt) do
     {seps, alphabet, a_len} = filter_seps(seps, [], alphabet, a_len)
-    seps = Helpers.consistent_shuffle(seps, key)
+    seps = Helpers.consistent_shuffle(seps, salt)
     s_len = length(seps)
     if s_len == 0 or a_len / s_len > @sep_div do
       new_len = max(2, trunc(Float.ceil(a_len / @sep_div)))
@@ -170,14 +170,14 @@ defmodule Hashids do
     end)
 
     %Hashids{
-      key: key, min_len: min_len,
+      salt: salt, min_len: min_len,
       alphabet: alphabet, a_len: a_len,
       seps: seps, s_len: s_len,
       guards: guards, g_len: g_len,
     } = s
 
     lottery = Enum.at(alphabet, rem(num_checksum, a_len))
-    {precipher, alphabet} = preencode(numbers, 0, [lottery], [lottery|key],
+    {precipher, alphabet} = preencode(numbers, 0, [lottery], [lottery|salt],
                                       alphabet, a_len, seps, s_len)
     p_len = length(precipher)
 
@@ -259,7 +259,7 @@ defmodule Hashids do
 
   def decode(s, cipher) do
     %Hashids{
-      key: key,
+      salt: salt,
       alphabet: alphabet, a_len: a_len,
       seps: seps, guards: guards,
     } = s
@@ -274,7 +274,7 @@ defmodule Hashids do
 
     if cipher_part != "" do
       {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
-      rkey = [lottery|key]
+      rkey = [lottery|salt]
       seps_str = List.to_string(seps)
       Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
       |> decode_parts(rkey, alphabet, a_len, [])
