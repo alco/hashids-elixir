@@ -1,10 +1,10 @@
-defmodule Saltie.Error do
+defmodule Hashids.Error do
   defexception message: ""
 end
 
-defmodule Saltie do
+defmodule Hashids do
   @moduledoc """
-  Saltie is a pseudo-encryption library.
+  Hashids lets you obfuscate numerical identifiers via reversible mapping.
   """
 
   defstruct [
@@ -15,7 +15,7 @@ defmodule Saltie do
     guards: [], g_len: 0,
   ]
 
-  @type t :: %Saltie{
+  @type t :: %Hashids{
     key: char_list,
     min_len: non_neg_integer,
     alphabet: char_list, a_len: non_neg_integer,
@@ -32,13 +32,13 @@ defmodule Saltie do
   @seps 'cfhistuCFHISTU'
 
 
-  alias Saltie.Helpers
+  alias Hashids.Helpers
 
 
   @doc """
-  Returns a struct that should be passed to `encrypt/2` and `decrypt/2`.
+  Returns a struct that should be passed to `encode/2` and `decode/2`.
 
-  Raises `Saltie.Error` if it encounters an invalid option.
+  Raises `Hashids.Error` if it encounters an invalid option.
   """
   @spec new() :: t
   @spec new(Keywort.t) :: t
@@ -65,7 +65,7 @@ defmodule Saltie do
       {guards, alphabet} = Enum.split(alphabet, guard_count)
       a_len = a_len - guard_count
     end
-    %Saltie{
+    %Hashids{
       key: key, min_len: min_len,
       alphabet: alphabet, a_len: a_len,
       seps: seps, s_len: length(seps),
@@ -91,11 +91,11 @@ defmodule Saltie do
     cond do
       Enum.count(set) < @min_alphabet_len ->
         msg = "Alphabet too short. Need at least #{@min_alphabet_len} characters."
-        raise Saltie.Error, message: msg
+        raise Hashids.Error, message: msg
 
       Enum.find(set, &(&1 == ?\s)) ->
         msg = "Spaces in the alphabet are not allowed."
-        raise Saltie.Error, message: msg
+        raise Hashids.Error, message: msg
 
       true -> :ok
     end
@@ -103,12 +103,12 @@ defmodule Saltie do
 
   defp validate_key!(key) when is_list(key), do: :ok
   defp validate_key!(_) do
-    raise Saltie.Error, message: "Key has to be a (possibly empty) char list."
+    raise Hashids.Error, message: "Key has to be a (possibly empty) char list."
   end
 
   defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
   defp validate_len!(_) do
-    raise Saltie.Error, message: "Minimum length has to be a non-negative integer."
+    raise Hashids.Error, message: "Minimum length has to be a non-negative integer."
   end
 
   defp calculate_seps(seps, alphabet, a_len, key) do
@@ -148,28 +148,28 @@ defmodule Saltie do
 
 
   @doc """
-  Encrypts the given number or a list of numbers.
+  Encodes the given number or a list of numbers.
 
   Returns a char list.
 
   Only non-negative integers are supported.
   """
 
-  @spec encrypt(t, non_neg_integer) :: char_list
-  def encrypt(s, number) when is_integer(number) and number >= 0 do
-    encrypt(s, [number])
+  @spec encode(t, non_neg_integer) :: char_list
+  def encode(s, number) when is_integer(number) and number >= 0 do
+    encode(s, [number])
   end
 
-  @spec encrypt(t, [non_neg_integer]) :: char_list
-  def encrypt(s, numbers) when is_list(numbers) do
+  @spec encode(t, [non_neg_integer]) :: char_list
+  def encode(s, numbers) when is_list(numbers) do
     {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
       num, _ when num < 0 or not is_integer(num) ->
-        raise Saltie.Error, message: "Expected a non-negative integer"
+        raise Hashids.Error, message: "Expected a non-negative integer"
       num, {cksm, i} ->
         {cksm + rem(num, i), i+1}
     end)
 
-    %Saltie{
+    %Hashids{
       key: key, min_len: min_len,
       alphabet: alphabet, a_len: a_len,
       seps: seps, s_len: s_len,
@@ -253,12 +253,12 @@ defmodule Saltie do
 
 
   @doc """
-  Decrypts the given char list back into a list of numbers.
+  Decodes the given char list back into a list of numbers.
   """
-  @spec decrypt(t, char_list) :: [non_neg_integer]
+  @spec decode(t, char_list) :: [non_neg_integer]
 
-  def decrypt(s, cipher) do
-    %Saltie{
+  def decode(s, cipher) do
+    %Hashids{
       key: key,
       alphabet: alphabet, a_len: a_len,
       seps: seps, guards: guards,

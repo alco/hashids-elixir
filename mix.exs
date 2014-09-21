@@ -1,28 +1,27 @@
-defmodule Saltie.Mixfile do
+defmodule Hashids.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :saltie,
-      version: "0.4.0-dev",
-      elixir: "~> 0.14.3",
+      app: :hashids,
+      version: "1.0.0-alpha",
+      elixir: "~> 1.0",
       description: description,
       package: package,
     ]
   end
 
   defp description do
-    "Saltie is a pseudo-encryption library primarily used for obfuscating " <>
-    "numerical identifiers to opaque strings."
+    "Hashids lets you obfuscate numerical identifiers via reversible mapping."
   end
 
   defp package do
     [
-      files: ["lib", "mix.exs", "README.md", "LICENSE"],
+      files: ["lib", "mix.exs", "README.md", "CHANGELOG.md", "LICENSE"],
       contributors: ["Alexei Sholik"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/alco/saltie",
+        "GitHub" => "https://github.com/alco/hashids-elixir",
       }
     ]
   end

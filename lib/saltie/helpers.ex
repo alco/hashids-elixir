@@ -1,7 +1,7 @@
-defmodule Saltie.Helpers do
+defmodule Hashids.Helpers do
   @moduledoc false
 
-  # This is a private module implementing some helper functions for Saltie
+  # This is a private module implementing some helper functions for Hashids
 
   # Shuffles elements in the list according to the key. Doesn't change the
   # length of the list.
