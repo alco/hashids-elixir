@@ -5,7 +5,7 @@ defmodule HashidsTest.Encode do
 
   test "default salt" do
     s = Hashids.new()
-    for {num, cipher} <- tests_from_fixture("default_key") do
+    for {num, cipher} <- tests_from_fixture("default_salt") do
       assert cipher == Hashids.encode(s, num)
       assert [num] === Hashids.decode(s, cipher)
     end
@@ -13,7 +13,7 @@ defmodule HashidsTest.Encode do
 
   test "default salt multinum" do
     s = Hashids.new()
-    for {numlist, cipher} <- tests_from_fixture("default_key_list") do
+    for {numlist, cipher} <- tests_from_fixture("default_salt_list") do
       assert cipher == Hashids.encode(s, numlist)
       assert numlist === Hashids.decode(s, cipher)
     end
@@ -21,7 +21,7 @@ defmodule HashidsTest.Encode do
 
   test "default salt large" do
     s = Hashids.new()
-    for {num, cipher} <- tests_from_fixture_large("default_key_large") do
+    for {num, cipher} <- tests_from_fixture_large("default_salt_large") do
       assert cipher == Hashids.encode(s, num)
       assert [num] === Hashids.decode(s, cipher)
     end
@@ -91,7 +91,7 @@ defmodule HashidsTest.Encode do
 
   test "custom salt 1" do
     s = Hashids.new(salt: 'hello world')
-    for {num, cipher} <- tests_from_fixture("custom_key_1") do
+    for {num, cipher} <- tests_from_fixture("custom_salt_1") do
       assert cipher == Hashids.encode(s, num)
       assert [num] === Hashids.decode(s, cipher)
     end
@@ -99,7 +99,7 @@ defmodule HashidsTest.Encode do
 
   test "custom salt 2" do
     s = Hashids.new(salt: '123_-+EBNFarigatou')
-    for {num, cipher} <- tests_from_fixture("custom_key_2") do
+    for {num, cipher} <- tests_from_fixture("custom_salt_2") do
       assert cipher == Hashids.encode(s, num)
       assert [num] === Hashids.decode(s, cipher)
     end
@@ -107,7 +107,7 @@ defmodule HashidsTest.Encode do
 
   test "custom salt large" do
     s = Hashids.new(salt: '-->secret key, no salt<--')
-    for {num, cipher} <- tests_from_fixture_large("custom_key_large") do
+    for {num, cipher} <- tests_from_fixture_large("custom_salt_large") do
       assert cipher == Hashids.encode(s, num)
       assert [num] == Hashids.decode(s, cipher)
     end
