@@ -4,7 +4,7 @@ defmodule Hashids.Mixfile do
   def project do
     [
       app: :hashids,
-      version: "1.0.0-alpha",
+      version: "1.0.0",
       elixir: "~> 1.0",
       description: description,
       package: package,
@@ -17,7 +17,7 @@ defmodule Hashids.Mixfile do
 
   defp package do
     [
-      files: ["lib", "mix.exs", "README.md", "CHANGELOG.md", "LICENSE"],
+      files: ["lib", "mix.exs", "README.md", "LICENSE"],
       contributors: ["Alexei Sholik"],
       licenses: ["MIT"],
       links: %{
