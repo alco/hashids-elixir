@@ -1,7 +1,7 @@
 Hashids
 =======
 
-[![Build status](https://travis-ci.org/alco/hashids.svg "Build status")](https://travis-ci.org/alco/hashids)
+[![Build status](https://travis-ci.org/alco/hashids-elixir.svg "Build status")](https://travis-ci.org/alco/hashids-elixir)
 [![Hex version](https://img.shields.io/hexpm/v/hashids.svg "Hex version")](https://hex.pm/packages/hashids)
 ![Hex downloads](https://img.shields.io/hexpm/dt/hashids.svg "Hex downloads")
 
