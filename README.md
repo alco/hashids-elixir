@@ -33,13 +33,11 @@ s = Hashids.new([
   min_len: 2,   # minimum length of the cipher text (1 by default)
 ])
 
-#FIXME
 cipher1 = Hashids.encode(s, 129)
-#=> 'pE6'
+#=> "pE6"
 
-#FIXME
 cipher2 = Hashids.encode(s, [1,2,3,4])
-#=> '4bSwImsd'
+#=> "4bSwImsd"
 
 # decode() always returns a list of numbers
 
@@ -57,14 +55,15 @@ providing an alphabet as a char list. It has to be at least 16 characters long.
 s = Hashids.new(alphabet: "1234567890абвгдежизклмн")
 
 cipher = Hashids.encode(s, [1234, 786, 21, 0])
-
-#FIXME
-List.to_string(cipher)
 #=> "имнк40же3ги1з"
 
 Hashids.decode(s, cipher)
 #=> {:ok, [1234, 786, 21, 0]}
 ```
+
+## Migrating from 1.0
+
+See the [changelog](CHANGELOG.md).
 
 ## License
 

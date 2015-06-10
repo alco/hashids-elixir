@@ -22,7 +22,7 @@ defmodule Hashids.Mixfile do
 
   defp package do
     [
-      files: ["lib", "mix.exs", "README.md", "LICENSE"],
+      files: ["lib", "mix.exs", "README.md", "LICENSE", "CHANGELOG.md"],
       contributors: ["Alexei Sholik"],
       licenses: ["MIT"],
       links: %{
