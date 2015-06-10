@@ -275,33 +275,34 @@ defmodule Hashids do
     skey = Stream.concat(rkey, alphabet) |> Enum.take(a_len)
     enc_alphabet = Helpers.consistent_shuffle(alphabet, skey)
     {last, last_len} = Helpers.encode(num, enc_alphabet, a_len)
-    {ret ++ last, last_len, enc_alphabet, last}
+    {[ret | last], last_len, enc_alphabet, last}
   end
 
   defp seps_step([char|_], i, num, ret, seps, seps_len) do
     index = rem(num, char+i) |> rem(seps_len)
-    ret ++ [Enum.at(seps, index)]
+    [ret, Enum.at(seps, index)]
   end
 
 
-  defp extend_precipher1([char|_]=precipher, p_len, min_len, num_cksm, guards, g_len)
+  defp extend_precipher1(precipher, p_len, min_len, num_cksm, guards, g_len)
     when p_len < min_len
   do
+    char = nested_list_at(precipher, 0)
     index = rem(num_cksm + char, g_len)
     guard = Enum.at(guards, index)
     {[guard|precipher], p_len+1}
   end
   defp extend_precipher1(precipher, p_len, _, _, _, _), do: {precipher, p_len}
 
-  defp extend_precipher2([_,_,char2|_]=precipher, p_len, min_len, num_cksm, guards, g_len)
+  defp extend_precipher2(precipher, p_len, min_len, num_cksm, guards, g_len)
     when p_len < min_len
   do
+    char2 = nested_list_at(precipher, 2)
     index = rem(num_cksm + char2, g_len)
     guard = Enum.at(guards, index)
-    {precipher ++ [guard], p_len+1}
+    {[precipher, guard], p_len+1}
   end
   defp extend_precipher2(precipher, p_len, _, _, _, _), do: {precipher, p_len}
-
 
   defp extend_cipher(cipher, c_len, min_len, alphabet, a_len)
     when c_len < min_len
@@ -310,12 +311,12 @@ defmodule Hashids do
     half_len = div(a_len, 2)
     {left, right} = Enum.split(new_alphabet, half_len)
 
-    new_cipher = List.flatten([right, cipher], left)
+    new_cipher = [right, cipher | left]
     new_c_len = c_len + a_len
 
     excess = new_c_len - min_len
     if excess > 0 do
-      new_cipher |> Enum.drop(div(excess, 2)) |> Enum.take(min_len)
+      new_cipher |> List.flatten |> Enum.drop(div(excess, 2)) |> Enum.take(min_len)
     else
       extend_cipher(new_cipher, new_c_len, min_len, new_alphabet, a_len)
     end
@@ -331,5 +332,32 @@ defmodule Hashids do
     dec_alphabet = Helpers.consistent_shuffle(alphabet, Enum.take(buffer, a_len))
     number = Helpers.decode(String.to_char_list(part), dec_alphabet, a_len)
     decode_parts(rest, rkey, dec_alphabet, a_len, [number|acc])
+  end
+
+
+  defp nested_list_at(list, i) when is_integer(i) and i >= 0 do
+    try do
+      do_nested_list_at(list, i)
+      raise "Index out of bounds"
+    catch
+      :throw, result -> result
+    end
+  end
+
+  defp do_nested_list_at([h|rest], i) when is_list(h) do
+    new_i = do_nested_list_at(h, i)
+    do_nested_list_at(rest, new_i)
+  end
+
+  defp do_nested_list_at([h|_], 0) do
+    throw h
+  end
+
+  defp do_nested_list_at([_|rest], i) do
+    do_nested_list_at(rest, i-1)
+  end
+
+  defp do_nested_list_at([], i) do
+    i
   end
 end
