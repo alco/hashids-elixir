@@ -30,14 +30,14 @@ defmodule Hashids.Helpers do
   # Builds up a string encoding of the numbers using characters from the
   # alphabet
   def encode(num, alphabet, a_len) do
-    encode(num, alphabet, a_len, [], false)
+    encode(num, alphabet, a_len, [], 0, false)
   end
 
-  defp encode(0, _, _, acc, true), do: acc
+  defp encode(0, _, _, acc, len, true), do: {acc, len}
 
-  defp encode(num, alphabet, a_len, acc, _) do
+  defp encode(num, alphabet, a_len, acc, len, _) do
     new_acc = [Enum.at(alphabet, rem(num, a_len)) | acc]
-    encode(div(num, a_len), alphabet, a_len, new_acc, true)
+    encode(div(num, a_len), alphabet, a_len, new_acc, len+1, true)
   end
 
 

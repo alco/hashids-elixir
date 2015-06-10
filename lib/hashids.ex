@@ -95,9 +95,8 @@ defmodule Hashids do
     } = s
 
     lottery = Enum.at(alphabet, rem(num_checksum, a_len))
-    {precipher, alphabet} =
-      preencode(numbers, 0, [lottery], [lottery|salt], alphabet, a_len, seps, s_len)
-    p_len = length(precipher)
+    {precipher, p_len, alphabet} =
+      preencode(numbers, 0, [lottery], 1, [lottery|salt], alphabet, a_len, seps, s_len)
 
     {interm_cipher, i_len} =
       extend_precipher1(precipher, p_len, min_len, num_checksum, guards, g_len)
@@ -261,22 +260,22 @@ defmodule Hashids do
   end
 
 
-  defp preencode([num], _, inret, rkey, alphabet, a_len, _, _) do
-    {outret, new_alphabet, _} = preencode_step(num, inret, rkey, alphabet, a_len)
-    {outret, new_alphabet}
+  defp preencode([num], _, inret, p_len, rkey, alphabet, a_len, _, _) do
+    {outret, step_len, new_alphabet, _} = preencode_step(num, inret, rkey, alphabet, a_len)
+    {outret, p_len+step_len, new_alphabet}
   end
 
-  defp preencode([num|rest], i, inret, rkey, alphabet, a_len, seps, seps_len) do
-    {outret, new_alphabet, last} = preencode_step(num, inret, rkey, alphabet, a_len)
+  defp preencode([num|rest], i, inret, p_len, rkey, alphabet, a_len, seps, seps_len) do
+    {outret, step_len, new_alphabet, last} = preencode_step(num, inret, rkey, alphabet, a_len)
     ret = seps_step(last, i, num, outret, seps, seps_len)
-    preencode(rest, i+1, ret, rkey, new_alphabet, a_len, seps, seps_len)
+    preencode(rest, i+1, ret, p_len+step_len+1, rkey, new_alphabet, a_len, seps, seps_len)
   end
 
   defp preencode_step(num, ret, rkey, alphabet, a_len) do
     skey = Stream.concat(rkey, alphabet) |> Enum.take(a_len)
     enc_alphabet = Helpers.consistent_shuffle(alphabet, skey)
-    last = Helpers.encode(num, enc_alphabet, a_len)
-    {ret ++ last, enc_alphabet, last}
+    {last, last_len} = Helpers.encode(num, enc_alphabet, a_len)
+    {ret ++ last, last_len, enc_alphabet, last}
   end
 
   defp seps_step([char|_], i, num, ret, seps, seps_len) do
