@@ -38,9 +38,8 @@ defmodule HashidsTest.Helpers do
   end
 
   defp build_opts(salt, min_len, alphabet) do
-    salt = String.to_char_list(salt)
     len = String.to_integer(min_len)
-    alphabet_opt = if alphabet == "", do: [], else: [alphabet: String.to_char_list(alphabet)]
+    alphabet_opt = if alphabet == "", do: [], else: [alphabet: alphabet]
     alphabet_opt ++ [salt: salt, min_len: len]
   end
 

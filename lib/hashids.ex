@@ -179,8 +179,6 @@ defmodule Hashids do
   defp parse_option!(:alphabet, kw) do
     list = case Keyword.fetch(kw, :alphabet) do
       :error -> @default_alphabet
-      # Deprecated. Left for compatibility with 1.0.
-      {:ok, list} when is_list(list) -> list
       {:ok, bin} when is_binary(bin) -> String.to_char_list(bin)
       _ ->
         message = "Alphabet has to be a string of at least 16 characters/codepoints."
@@ -194,8 +192,6 @@ defmodule Hashids do
   defp parse_option!(:salt, kw) do
     case Keyword.fetch(kw, :salt) do
       :error -> []
-      # Deprecated. Left for compatibility with 1.0.
-      {:ok, list} when is_list(list) -> list
       {:ok, bin} when is_binary(bin) -> String.to_char_list(bin)
       _ -> raise Hashids.Error, message: "Salt has to be a (possibly empty) string."
     end
