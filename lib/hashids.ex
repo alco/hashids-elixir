@@ -1,28 +1,25 @@
-defmodule Hashids.Error do
-  defexception message: ""
-end
-
 defmodule Hashids do
   @moduledoc """
   Hashids lets you obfuscate numerical identifiers via reversible mapping.
+
+  ## Example
+
+      h = Hashids.new(salt: "my salt")
+      encoded = Hashids.encode(h, [1,2,3])
+      [1,2,3] = Hashids.decode(h, encoded)
+
   """
 
   defstruct [
-    salt: [],
-    min_len: 0,
-    alphabet: [], a_len: 0,
-    seps: [], s_len: 0,
-    guards: [], g_len: 0,
+    alphabet: [], salt: [], min_len: 0,
+    a_len: 0, seps: [], s_len: 0, guards: [], g_len: 0,
   ]
 
-  @type t :: %Hashids{
-    salt: char_list,
-    min_len: non_neg_integer,
-    alphabet: char_list, a_len: non_neg_integer,
-    seps: char_list, s_len: non_neg_integer,
-    guards: char_list, g_len: non_neg_integer,
+  @typep t :: %Hashids{
+    alphabet: char_list, salt: char_list, min_len: non_neg_integer,
+    a_len: non_neg_integer, seps: char_list, s_len: non_neg_integer, guards: char_list,
+    g_len: non_neg_integer,
   }
-
 
   @min_alphabet_len 16
   @sep_div 3.5
@@ -31,30 +28,31 @@ defmodule Hashids do
   @default_alphabet 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
   @seps 'cfhistuCFHISTU'
 
-
   alias Hashids.Helpers
 
-
   @doc """
-  Returns a struct that should be passed to `encode/2` and `decode/2`.
+  Create a struct containing the configuration options for Hashids. It should be passed to
+  `encode/2` and `decode/2`.
 
   Raises `Hashids.Error` if it encounters an invalid option.
+
+  ## Options
+
+    * `:alphabet` – a string of characters to be used in the resulting hash value. By default,
+      characters from the Latin alphabet and digits are used.
+    * `:salt` – a string that will be used to permute the hash value and make it decodable only by
+      using the same salt that was provided during encoding. Default: empty string.
+    * `:min_len` – the minimum length of the resulting hash. Default: 0.
+
   """
   @spec new() :: t
-  @spec new(Keywort.t) :: t
+  @spec new([{:alphabet, binary} | {:salt, binary} | {:min_len, non_neg_integer}]) :: t
 
   def new(options \\ []) do
-    alphabet = Keyword.get(options, :alphabet, @default_alphabet)
-    salt = Keyword.get(options, :salt, [])
-    min_len = Keyword.get(options, :min_len, 0)
+    {uniq_alphabet, a_len} = parse_option!(:alphabet, options)
+    salt = parse_option!(:salt, options)
+    min_len = parse_option!(:min_len, options)
 
-    {uniq_alphabet, set} = uniquify_chars(alphabet)
-
-    validate_alphabet!(set)
-    validate_salt!(salt)
-    validate_len!(min_len)
-
-    a_len = Enum.count(set)
     {seps, alphabet, a_len} = calculate_seps(@seps, uniq_alphabet, a_len, salt)
 
     alphabet = Helpers.consistent_shuffle(alphabet, salt)
@@ -66,49 +64,147 @@ defmodule Hashids do
       a_len = a_len - guard_count
     end
     %Hashids{
-      salt: salt, min_len: min_len,
-      alphabet: alphabet, a_len: a_len,
-      seps: seps, s_len: length(seps),
-      guards: guards, g_len: length(guards),
+      alphabet: alphabet, salt: salt, min_len: min_len,
+      a_len: a_len, seps: seps, s_len: length(seps), guards: guards, g_len: length(guards),
     }
   end
 
-  defp uniquify_chars(char_list) do
-    uniquify_chars(char_list, [], HashSet.new)
+  @doc """
+  Encode the given number or a list of numbers.
+
+  Only non-negative integers are supported.
+  """
+  @spec encode(t, non_neg_integer) :: iodata
+  @spec encode(t, [non_neg_integer]) :: iodata
+
+  def encode(s, number) when is_integer(number) and number >= 0 do
+    encode(s, [number])
   end
 
-  defp uniquify_chars([], acc, set), do: {Enum.reverse(acc), set}
+  def encode(s, numbers) when is_list(numbers) do
+    {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
+      num, _ when num < 0 or not is_integer(num) ->
+        raise Hashids.Error, message: "Expected a non-negative integer. Got: #{inspect num}"
+      num, {cksm, i} ->
+        {cksm + rem(num, i), i+1}
+    end)
 
-  defp uniquify_chars([char|rest], acc, set) do
-    if Set.member?(set, char) do
-      uniquify_chars(rest, acc, set)
+    %Hashids{
+      alphabet: alphabet, salt: salt, min_len: min_len,
+      a_len: a_len, seps: seps, s_len: s_len, guards: guards, g_len: g_len,
+    } = s
+
+    lottery = Enum.at(alphabet, rem(num_checksum, a_len))
+    {precipher, alphabet} =
+      preencode(numbers, 0, [lottery], [lottery|salt], alphabet, a_len, seps, s_len)
+    p_len = length(precipher)
+
+    {interm_cipher, i_len} =
+      extend_precipher1(precipher, p_len, min_len, num_checksum, guards, g_len)
+    {interm_cipher, i_len} =
+      extend_precipher2(interm_cipher, i_len, min_len, num_checksum, guards, g_len)
+
+    extend_cipher(interm_cipher, i_len, min_len, alphabet, a_len)
+    |> List.to_string
+  end
+
+  @doc """
+  Decode the given iodata back into a list of numbers.
+
+  Will raise an error if the provided data is not a valid hash value or a wrong Hashids struct is
+  used.
+  """
+  @spec decode(t, iodata) :: [non_neg_integer]
+
+  def decode(s, data) do
+    %Hashids{
+      alphabet: alphabet, salt: salt, a_len: a_len, seps: seps, guards: guards,
+    } = s
+
+    guards_str = List.to_string(guards)
+    cipher_split_at_guards =
+      Regex.split(~r/[#{Regex.escape(guards_str)}]/, IO.iodata_to_binary(data))
+    cipher_part = case cipher_split_at_guards do
+      [_, x]    -> x
+      [_, x, _] -> x
+      [x|_]     -> x
+    end
+
+    if cipher_part != "" do
+      {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
+      rkey = [lottery|salt]
+      seps_str = List.to_string(seps)
+      Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
+      |> decode_parts(rkey, alphabet, a_len, [])
     else
-      uniquify_chars(rest, [char|acc], Set.put(set, char))
+      []
     end
   end
 
-  defp validate_alphabet!(set) do
+  #
+  # Privates
+  #
+
+  defp uniquify_chars(char_list) do
+    uniquify_chars(char_list, [], HashSet.new, 0)
+  end
+
+  defp uniquify_chars([], acc, set, nchars), do: {Enum.reverse(acc), set, nchars}
+
+  defp uniquify_chars([char|rest], acc, set, nchars) do
+    if Set.member?(set, char) do
+      uniquify_chars(rest, acc, set, nchars)
+    else
+      uniquify_chars(rest, [char|acc], Set.put(set, char), nchars+1)
+    end
+  end
+
+  defp parse_option!(:alphabet, kw) do
+    list = case Keyword.fetch(kw, :alphabet) do
+      :error -> @default_alphabet
+      # Deprecated. Left for compatibility with 1.0.
+      {:ok, list} when is_list(list) -> list
+      {:ok, bin} when is_binary(bin) -> String.to_char_list(bin)
+      _ ->
+        message = "Alphabet has to be a string of at least 16 characters/codepoints."
+        raise Hashids.Error, message: message
+    end
+    {uniq_alphabet, set, nchars} = uniquify_chars(list)
+    :ok = validate_alphabet!(set, nchars)
+    {uniq_alphabet, nchars}
+  end
+
+  defp parse_option!(:salt, kw) do
+    case Keyword.fetch(kw, :salt) do
+      :error -> []
+      # Deprecated. Left for compatibility with 1.0.
+      {:ok, list} when is_list(list) -> list
+      {:ok, bin} when is_binary(bin) -> String.to_char_list(bin)
+      _ -> raise Hashids.Error, message: "Salt has to be a (possibly empty) string."
+    end
+  end
+
+  defp parse_option!(:min_len, kw) do
+    case Keyword.fetch(kw, :min_len) do
+      :error -> 0
+      {:ok, len} when is_integer(len) and len >= 0 -> len
+      _ -> raise Hashids.Error, message: "Min_len has to be a non-negative integer."
+    end
+  end
+
+  defp validate_alphabet!(set, nchars) do
     cond do
-      Enum.count(set) < @min_alphabet_len ->
-        msg = "Alphabet too short. Need at least #{@min_alphabet_len} characters."
+      nchars < @min_alphabet_len ->
+        msg = "Alphabet too short. Need at least #{@min_alphabet_len} characters/codepoints."
         raise Hashids.Error, message: msg
 
+      # TODO: use a regex?
       Enum.find(set, &(&1 == ?\s)) ->
         msg = "Spaces in the alphabet are not allowed."
         raise Hashids.Error, message: msg
 
       true -> :ok
     end
-  end
-
-  defp validate_salt!(salt) when is_list(salt), do: :ok
-  defp validate_salt!(_) do
-    raise Hashids.Error, message: "Salt has to be a (possibly empty) char list."
-  end
-
-  defp validate_len!(len) when is_integer(len) and len >= 0, do: :ok
-  defp validate_len!(_) do
-    raise Hashids.Error, message: "Minimum length has to be a non-negative integer."
   end
 
   defp calculate_seps(seps, alphabet, a_len, salt) do
@@ -144,47 +240,6 @@ defmodule Hashids do
       # seps should contain only characters present in alphabet
       filter_seps(rest, seps, alphabet, a_len)
     end
-  end
-
-
-  @doc """
-  Encodes the given number or a list of numbers.
-
-  Returns a char list.
-
-  Only non-negative integers are supported.
-  """
-
-  @spec encode(t, non_neg_integer) :: char_list
-  def encode(s, number) when is_integer(number) and number >= 0 do
-    encode(s, [number])
-  end
-
-  @spec encode(t, [non_neg_integer]) :: char_list
-  def encode(s, numbers) when is_list(numbers) do
-    {num_checksum, _} = Enum.reduce(numbers, {0, 100}, fn
-      num, _ when num < 0 or not is_integer(num) ->
-        raise Hashids.Error, message: "Expected a non-negative integer"
-      num, {cksm, i} ->
-        {cksm + rem(num, i), i+1}
-    end)
-
-    %Hashids{
-      salt: salt, min_len: min_len,
-      alphabet: alphabet, a_len: a_len,
-      seps: seps, s_len: s_len,
-      guards: guards, g_len: g_len,
-    } = s
-
-    lottery = Enum.at(alphabet, rem(num_checksum, a_len))
-    {precipher, alphabet} = preencode(numbers, 0, [lottery], [lottery|salt],
-                                      alphabet, a_len, seps, s_len)
-    p_len = length(precipher)
-
-    {interm_cipher, i_len} = extend_precipher1(precipher, p_len, min_len, num_checksum, guards, g_len)
-    {interm_cipher, i_len} = extend_precipher2(interm_cipher, i_len, min_len, num_checksum, guards, g_len)
-
-    extend_cipher(interm_cipher, i_len, min_len, alphabet, a_len)
   end
 
 
@@ -251,37 +306,6 @@ defmodule Hashids do
 
   defp extend_cipher(cipher, _, _, _, _), do: cipher
 
-
-  @doc """
-  Decodes the given char list back into a list of numbers.
-  """
-  @spec decode(t, char_list) :: [non_neg_integer]
-
-  def decode(s, cipher) do
-    %Hashids{
-      salt: salt,
-      alphabet: alphabet, a_len: a_len,
-      seps: seps, guards: guards,
-    } = s
-
-    guards_str = List.to_string(guards)
-    cipher_split_at_guards = Regex.split(~r/[#{Regex.escape(guards_str)}]/, List.to_string(cipher))
-    cipher_part = case cipher_split_at_guards do
-      [_, x]    -> x
-      [_, x, _] -> x
-      [x|_]     -> x
-    end
-
-    if cipher_part != "" do
-      {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
-      rkey = [lottery|salt]
-      seps_str = List.to_string(seps)
-      Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
-      |> decode_parts(rkey, alphabet, a_len, [])
-    else
-      []
-    end
-  end
 
   defp decode_parts([], _, _, _, acc), do: Enum.reverse(acc)
 

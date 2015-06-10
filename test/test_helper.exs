@@ -73,12 +73,12 @@ defmodule HashidsTest.Helpers do
           |> Enum.map(&String.strip/1)
           |> Enum.reject(&(&1 == ""))
           |> Enum.map(&String.to_integer/1)
-        {numbers, String.to_char_list(encoded)}
+        {numbers, encoded}
 
       _ ->
         # <number> <encoded>
         [numstr, encoded] = String.split(str, " ")
-        {String.to_integer(numstr), String.to_char_list(encoded)}
+        {String.to_integer(numstr), encoded}
     end
   end
 end
