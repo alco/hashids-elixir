@@ -1,10 +1,12 @@
 defmodule Hashids.Mixfile do
   use Mix.Project
 
+  @version "2.0.0"
+
   def project do
     [
       app: :hashids,
-      version: "2.0.0-dev",
+      version: "2.0.0",
       elixir: "~> 1.0",
       deps: deps,
       description: description,
@@ -12,6 +14,7 @@ defmodule Hashids.Mixfile do
       source_url: "https://github.com/alco/hashids-elixir",
       docs: [
         main: Hashids,
+        source_ref: "v#{@version}",
       ],
     ]
   end
