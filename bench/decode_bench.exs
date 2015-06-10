@@ -1,4 +1,4 @@
-defmodule Bench.HashidsEncode do
+defmodule Bench.HashidsDecode do
   use Benchfella
 
   hashids = [
@@ -13,16 +13,20 @@ defmodule Bench.HashidsEncode do
 
   for {alpha, h} <- hashids do
     @h h
-    bench "#{alpha}: encode 1 integer" do
-      Hashids.encode(@h, 100)
+    bench "#{alpha}: decode 1 integer", input: encode(@h, 100) do
+      Hashids.decode(@h, input)
     end
 
-    bench "#{alpha}: encode 10 integers" do
-      Hashids.encode(@h, 1000..1010 |> Enum.to_list)
+    bench "#{alpha}: decode 10 integers", input: encode(@h, 1000..1010 |> Enum.to_list) do
+      Hashids.decode(@h, input)
     end
 
-    bench "#{alpha}: encode 100 integers" do
-      Hashids.encode(@h, 100..200 |> Enum.to_list)
+    bench "#{alpha}: decode 100 integers", input: encode(@h, 100..200 |> Enum.to_list) do
+      Hashids.decode(@h, input)
     end
+  end
+
+  defp encode(h, nums) do
+    Hashids.encode(h, nums)
   end
 end
