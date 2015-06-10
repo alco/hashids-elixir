@@ -25,16 +25,6 @@ defmodule HashidsTest.Helpers do
     end
   end
 
-  def tests_from_fixture_large(path) do
-    File.read!(Path.join([__DIR__, "fixtures", "v1.0.0", "large", path]))
-    |> tests_from_string()
-  end
-
-  def tests_from_fixture(path) do
-    File.read!(Path.join([__DIR__, "fixtures", "v1.0.0", "base", path]))
-    |> tests_from_string()
-  end
-
   @header_re ~r/#\s+salt:\s+'([^']*)'\s+min_len:\s+(\d+)\s+alphabet:\s+(?:'([^']+)'|(<default>))$/
 
   defp parse_test_case(str) do
