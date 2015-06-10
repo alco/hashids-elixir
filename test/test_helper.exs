@@ -19,7 +19,7 @@ defmodule HashidsTest.Helpers do
         s = Hashids.new(unquote(options))
         for {nums, encoded} <- unquote(tests) do
           assert encoded == Hashids.encode(s, nums)
-          assert List.wrap(nums) === Hashids.decode(s, encoded)
+          assert List.wrap(nums) === Hashids.decode!(s, encoded)
         end
       end
     end

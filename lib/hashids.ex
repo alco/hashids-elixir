@@ -6,7 +6,7 @@ defmodule Hashids do
 
       h = Hashids.new(salt: "my salt")
       encoded = Hashids.encode(h, [1,2,3])
-      [1,2,3] = Hashids.decode(h, encoded)
+      {:ok, [1,2,3]} = Hashids.decode(h, encoded)
 
   """
 
@@ -110,34 +110,52 @@ defmodule Hashids do
 
   @doc """
   Decode the given iodata back into a list of numbers.
-
-  Will raise an error if the provided data is not a valid hash value or a wrong Hashids struct is
-  used.
   """
-  @spec decode(t, iodata) :: [non_neg_integer]
+  @spec decode(t, iodata) :: {:ok, [non_neg_integer]} | {:error, :invalid_input_data}
 
-  def decode(s, data) do
-    %Hashids{
-      alphabet: alphabet, salt: salt, a_len: a_len, seps: seps, guards: guards,
-    } = s
+  def decode(
+    %Hashids{alphabet: alphabet, salt: salt, a_len: a_len, seps: seps, guards: guards},
+    data) when is_list(data) or is_binary(data)
+  do
+    try do
+      cipher_split_at_guards =
+        String.split(IO.iodata_to_binary(data), Enum.map(guards, &<<&1::utf8>>))
+      cipher_part = case cipher_split_at_guards do
+        [_, x]    -> x
+        [_, x, _] -> x
+        [x|_]     -> x
+      end
 
-    guards_str = List.to_string(guards)
-    cipher_split_at_guards =
-      Regex.split(~r/[#{Regex.escape(guards_str)}]/, IO.iodata_to_binary(data))
-    cipher_part = case cipher_split_at_guards do
-      [_, x]    -> x
-      [_, x, _] -> x
-      [x|_]     -> x
+      result = if cipher_part != "" do
+        {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
+        rkey = [lottery|salt]
+        String.split(rest_part, Enum.map(seps, &<<&1::utf8>>))
+        |> decode_parts(rkey, alphabet, a_len, [])
+      else
+        []
+      end
+      {:ok, result}
+    rescue
+      _error -> {:error, :invalid_input_data}
     end
+  end
 
-    if cipher_part != "" do
-      {<<lottery::utf8>>, rest_part} = String.split_at(cipher_part, 1)
-      rkey = [lottery|salt]
-      seps_str = List.to_string(seps)
-      Regex.split(~r/[#{Regex.escape(seps_str)}]/, rest_part)
-      |> decode_parts(rkey, alphabet, a_len, [])
-    else
-      []
+  def decode(_, _) do
+    raise Hashids.Error, message: "Expected iodata."
+  end
+
+  @doc """
+  Decode the given iodata back into a list of numbers.
+
+  Will raise a `Hashids.DecodingError` if the provided data is not a valid hash value or a
+  Hashids struct with incompatible alphabet.
+  """
+  @spec decode!(t, iodata) :: [non_neg_integer] | no_return
+
+  def decode!(s, data) do
+    case decode(s, data) do
+      {:ok, result} -> result
+      {:error, _reason} -> raise Hashids.DecodingError, message: "Invalid input data."
     end
   end
 
