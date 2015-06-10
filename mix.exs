@@ -4,10 +4,15 @@ defmodule Hashids.Mixfile do
   def project do
     [
       app: :hashids,
-      version: "1.0.0",
+      version: "2.0.0-dev",
       elixir: "~> 1.0",
+      deps: deps,
       description: description,
       package: package,
+      source_url: "https://github.com/alco/hashids-elixir",
+      docs: [
+        main: Hashids,
+      ],
     ]
   end
 
@@ -26,6 +31,10 @@ defmodule Hashids.Mixfile do
     ]
   end
 
-  # no deps
-  # --alco
+  defp deps do
+    [
+      {:ex_doc, "~> 0.7", only: :docs},
+      {:benchfella, "~> 0.2", only: :bench},
+    ]
+  end
 end
