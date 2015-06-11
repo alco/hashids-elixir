@@ -24,7 +24,7 @@ end
 
 ## Usage
 
-Hashids encodes a list of integers into a char list. Some of the encoding
+Hashids encodes a list of integers into a string (technically, iodata). Some of the encoding
 parameters can be customized.
 
 ```elixir
@@ -49,15 +49,26 @@ Hashids.decode!(s, cipher2)
 ```
 
 It is also possible to customize the character set used for the cipher text by
-providing an alphabet as a char list. It has to be at least 16 characters long.
+providing a custom alphabet. It has to be at least 16 characters long.
 
 ```elixir
-s = Hashids.new(alphabet: "1234567890абвгдежизклмн")
+defmodule MyAccessToken do
+  @cyrillic_alphabet "123456789абвгґдеєжзиіїйклмнопрстуфцчшщьюяАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФЦЧШЩЬЮЯ"
+  @coder Hashids.new(alphabet: @cyrillic_alphabet)
 
-cipher = Hashids.encode(s, [1234, 786, 21, 0])
-#=> "имнк40же3ги1з"
+  def encode(token_ids) do
+    Hashids.encode(@coder, token_ids)
+  end
 
-Hashids.decode(s, cipher)
+  def decode(data) do
+    Hashids.decode(@coder, data)
+  end
+end
+
+data = MyAccessToken.encode([1234, 786, 21, 0])
+#=> "ЦфюєИНаЛ1И"
+
+MyAccessToken.decode(data)
 #=> {:ok, [1234, 786, 21, 0]}
 ```
 
