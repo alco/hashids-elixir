@@ -19,4 +19,10 @@ defmodule HashidsTest.Encode do
   testcase_from_fixture_large "min_length_20_large"
   testcase_from_fixture_large "short_alphabet_large"
   testcase_from_fixture_large "long_alphabet_large"
+
+  test "decode! fail throws exception" do
+    assert_raise Hashids.DecodingError, fn->
+      Hashids.decode!(Hashids.new,"%%%%%")
+    end
+  end
 end
