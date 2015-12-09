@@ -57,11 +57,13 @@ defmodule Hashids do
 
     alphabet = Helpers.consistent_shuffle(alphabet, salt)
     guard_count = trunc(Float.ceil(a_len / @guard_div))
-    if a_len < 3 do
+    {alphabet, guards, seps, a_len} = if a_len < 3 do
       {guards, seps} = Enum.split(seps, guard_count)
+      {alphabet, guards, seps, a_len}
     else
       {guards, alphabet} = Enum.split(alphabet, guard_count)
       a_len = a_len - guard_count
+      {alphabet, guards, seps, a_len}
     end
     %Hashids{
       alphabet: alphabet, salt: salt, min_len: min_len,
