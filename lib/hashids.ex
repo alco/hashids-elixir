@@ -234,11 +234,14 @@ defmodule Hashids do
         seps = seps ++ left
         alphabet = right
         a_len = a_len - diff
+        {seps, alphabet, a_len}
       else
         seps = Enum.take(seps, new_len)
+        {seps, alphabet, a_len}
       end
+    else
+      {seps, alphabet, a_len}
     end
-    {seps, alphabet, a_len}
   end
 
   defp filter_seps([], seps, alphabet, a_len) do
