@@ -8,9 +8,9 @@ defmodule Hashids.Mixfile do
       app: :hashids,
       version: @version,
       elixir: "~> 1.0",
-      deps: deps,
-      description: description,
-      package: package,
+      deps: deps(),
+      description: description(),
+      package: package(),
       source_url: "https://github.com/alco/hashids-elixir",
       docs: [
         main: Hashids,

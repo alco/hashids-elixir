@@ -165,16 +165,16 @@ defmodule Hashids do
   #
 
   defp uniquify_chars(char_list) do
-    uniquify_chars(char_list, [], HashSet.new, 0)
+    uniquify_chars(char_list, [], MapSet.new, 0)
   end
 
   defp uniquify_chars([], acc, set, nchars), do: {Enum.reverse(acc), set, nchars}
 
   defp uniquify_chars([char|rest], acc, set, nchars) do
-    if Set.member?(set, char) do
+    if MapSet.member?(set, char) do
       uniquify_chars(rest, acc, set, nchars)
     else
-      uniquify_chars(rest, [char|acc], Set.put(set, char), nchars+1)
+      uniquify_chars(rest, [char|acc], MapSet.put(set, char), nchars+1)
     end
   end
 
