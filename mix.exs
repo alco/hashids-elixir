@@ -7,7 +7,7 @@ defmodule Hashids.Mixfile do
     [
       app: :hashids,
       version: @version,
-      elixir: "~> 1.0",
+      elixir: "~> 1.4",
       deps: deps(),
       description: description(),
       package: package(),
