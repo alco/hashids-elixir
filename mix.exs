@@ -37,7 +37,7 @@ defmodule Hashids.Mixfile do
   defp deps do
     [
       {:benchfella, "~> 0.2", only: :bench},
-      {:ex_doc, "> 0.0.0", only: :docs},
+      {:ex_doc, "> 0.0.0", only: :dev},
     ]
   end
 end
