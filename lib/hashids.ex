@@ -16,8 +16,8 @@ defmodule Hashids do
   ]
 
   @typep t :: %Hashids{
-    alphabet: char_list, salt: char_list, min_len: non_neg_integer,
-    a_len: non_neg_integer, seps: char_list, s_len: non_neg_integer, guards: char_list,
+    alphabet: charlist, salt: charlist, min_len: non_neg_integer,
+    a_len: non_neg_integer, seps: charlist, s_len: non_neg_integer, guards: charlist,
     g_len: non_neg_integer,
   }
 
@@ -164,8 +164,8 @@ defmodule Hashids do
   # Privates
   #
 
-  defp uniquify_chars(char_list) do
-    uniquify_chars(char_list, [], MapSet.new, 0)
+  defp uniquify_chars(charlist) do
+    uniquify_chars(charlist, [], MapSet.new, 0)
   end
 
   defp uniquify_chars([], acc, set, nchars), do: {Enum.reverse(acc), set, nchars}
@@ -181,7 +181,7 @@ defmodule Hashids do
   defp parse_option!(:alphabet, kw) do
     list = case Keyword.fetch(kw, :alphabet) do
       :error -> @default_alphabet
-      {:ok, bin} when is_binary(bin) -> String.to_char_list(bin)
+      {:ok, bin} when is_binary(bin) -> String.to_charlist(bin)
       _ ->
         message = "Alphabet has to be a string of at least 16 characters/codepoints."
         raise Hashids.Error, message: message
@@ -194,7 +194,7 @@ defmodule Hashids do
   defp parse_option!(:salt, kw) do
     case Keyword.fetch(kw, :salt) do
       :error -> []
-      {:ok, bin} when is_binary(bin) -> String.to_char_list(bin)
+      {:ok, bin} when is_binary(bin) -> String.to_charlist(bin)
       _ -> raise Hashids.Error, message: "Salt has to be a (possibly empty) string."
     end
   end
@@ -331,7 +331,7 @@ defmodule Hashids do
   defp decode_parts([part|rest], rkey, alphabet, a_len, acc) do
     buffer = rkey ++ alphabet
     dec_alphabet = Helpers.consistent_shuffle(alphabet, Enum.take(buffer, a_len))
-    number = Helpers.decode(String.to_char_list(part), dec_alphabet, a_len)
+    number = Helpers.decode(String.to_charlist(part), dec_alphabet, a_len)
     decode_parts(rest, rkey, dec_alphabet, a_len, [number|acc])
   end
 
