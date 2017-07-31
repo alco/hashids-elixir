@@ -46,7 +46,7 @@ defmodule HashidsTest.Helpers do
   defp tests_from_string(str) do
     str
     |> String.split("\n")
-    |> Enum.map(&String.strip/1)
+    |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.reject(&match?("#"<>_, &1))
     |> Enum.map(&split_fields/1)
@@ -59,7 +59,7 @@ defmodule HashidsTest.Helpers do
         numbers =
           numstr
           |> String.split(" ")
-          |> Enum.map(&String.strip/1)
+          |> Enum.map(&String.trim/1)
           |> Enum.reject(&(&1 == ""))
           |> Enum.map(&String.to_integer/1)
         {numbers, encoded}
