@@ -14,4 +14,4 @@ Changelog
 
 ## v1.0.0 – Oct 26, 2014
 
-  * initial release on hex.pm
+  * Initial release on hex.pm.
