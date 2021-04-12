@@ -2,8 +2,12 @@ Hashids
 =======
 
 [![Build status](https://travis-ci.org/alco/hashids-elixir.svg "Build status")](https://travis-ci.org/alco/hashids-elixir)
-[![Hex version](https://img.shields.io/hexpm/v/hashids.svg "Hex version")](https://hex.pm/packages/hashids)
-![Hex downloads](https://img.shields.io/hexpm/dt/hashids.svg "Hex downloads")
+[![Module Version](https://img.shields.io/hexpm/v/hashids.svg)](https://hex.pm/packages/hashids)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/hashids/)
+[![Total Download](https://img.shields.io/hexpm/dt/hashids.svg)](https://hex.pm/packages/hashids)
+[![License](https://img.shields.io/hexpm/l/hashids.svg)](https://github.com/alco/hashids-elixir/blob/master/LICENSE.md)
+[![Last Updated](https://img.shields.io/github/last-commit/alco/hashids-elixir.svg)](https://github.com/alco/hashids/commits/master)
+
 
 Hashids lets you obfuscate numerical identifiers via reversible mapping.
 
@@ -18,7 +22,9 @@ Add Hashids as a dependency to your Mix project:
 
 ```elixir
 defp deps do
-  [{:hashids, "~> 2.0"}]
+  [
+    {:hashids, "~> 2.0"}
+  ]
 end
 ```
 
@@ -74,8 +80,10 @@ MyAccessToken.decode(data)
 
 ## Migrating from 1.0
 
-See the [changelog](CHANGELOG.md).
+See the [changelog](./CHANGELOG.md).
 
-## License
+## Copyright and License
 
-This software is licensed under [the MIT license](LICENSE).
+Copyright (c) 2014 Alexei Sholik
+
+This software is licensed under [the MIT license](./LICENSE.md).
