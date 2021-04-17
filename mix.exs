@@ -2,7 +2,7 @@ defmodule Hashids.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/alco/hashids-elixir"
-  @version "2.0.4"
+  @version "2.0.5"
 
   def project do
     [
@@ -31,7 +31,7 @@ defmodule Hashids.Mixfile do
   defp deps do
     [
       {:benchfella, "~> 0.2", only: :bench},
-      {:ex_doc, "> 0.0.0", only: :dev, runtime: false},
+      {:ex_doc, "> 0.0.0", only: :dev, runtime: false}
     ]
   end
 
