@@ -55,7 +55,7 @@ defmodule Hashids.Helpers do
     decode(new_num, rest, rem_len, alphabet, a_len)
   end
 
-  use Bitwise
+  import Bitwise
 
   defp ipow(_, 0), do: 1
   defp ipow(a, 1), do: a
