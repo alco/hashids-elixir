@@ -82,8 +82,6 @@ MyAccessToken.decode(data)
 
 See the [changelog](./CHANGELOG.md).
 
-## Copyright and License
-
-Copyright (c) 2014 Alexei Sholik
+## License
 
 This software is licensed under [the MIT license](./LICENSE.md).

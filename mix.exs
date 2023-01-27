@@ -19,7 +19,7 @@ defmodule Hashids.Mixfile do
     [
       description: "Hashids lets you obfuscate numerical identifiers via reversible mapping.",
       files: ["lib", "mix.exs", "README.md", "LICENSE.md", "CHANGELOG.md"],
-      maintainers: ["Alexei Sholik"],
+      maintainers: ["Oleksii Sholik"],
       licenses: ["MIT"],
       links: %{
         "Changelog" => "https://hexdocs.pm/hashids/changelog.html",
