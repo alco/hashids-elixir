@@ -26,7 +26,7 @@ defmodule Hashids do
   @guard_div 12
 
   @default_alphabet 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
-  @seps 'cfhistuCFHISTU'
+  @default_seps 'cfhistuCFHISTU'
 
   alias Hashids.Helpers
 
@@ -40,6 +40,7 @@ defmodule Hashids do
 
     * `:alphabet` – a string of characters to be used in the resulting hash value. By default,
       characters from the Latin alphabet and digits are used.
+    * `:seps` - a string of characters to be used as separators. Default: "cfhistuCFHISTU".
     * `:salt` – a string that will be used to permute the hash value and make it decodable only by
       using the same salt that was provided during encoding. Default: empty string.
     * `:min_len` – the minimum length of the resulting hash. Default: 0.
@@ -50,10 +51,11 @@ defmodule Hashids do
 
   def new(options \\ []) do
     {uniq_alphabet, a_len} = parse_option!(:alphabet, options)
+    seps = parse_option!(:seps, options)
     salt = parse_option!(:salt, options)
     min_len = parse_option!(:min_len, options)
 
-    {seps, alphabet, a_len} = calculate_seps(@seps, uniq_alphabet, a_len, salt)
+    {seps, alphabet, a_len} = calculate_seps(seps, uniq_alphabet, a_len, salt)
 
     alphabet = Helpers.consistent_shuffle(alphabet, salt)
     guard_count = trunc(Float.ceil(a_len / @guard_div))
@@ -189,6 +191,14 @@ defmodule Hashids do
     {uniq_alphabet, set, nchars} = uniquify_chars(list)
     :ok = validate_alphabet!(set, nchars)
     {uniq_alphabet, nchars}
+  end
+
+  defp parse_option!(:seps, kw) do
+    case Keyword.fetch(kw, :seps) do
+      :error -> @default_seps
+      {:ok, bin} when is_binary(bin) -> String.to_charlist(bin)
+      _ -> raise Hashids.Error, message: "Seps has to be a string."
+    end
   end
 
   defp parse_option!(:salt, kw) do
